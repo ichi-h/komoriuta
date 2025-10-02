@@ -158,3 +158,207 @@
 | OFF            | None                         | ON                           | ManuallyON                 | （OK）手動で電源が ON になった → 電源ステータスを ON に変える必要がある                                                                                                                                        |
 | OFF            | None                         | Stopping                     | Unknown                    | （あり得ない）一度電源が落ちた状態から初回のハートビートは必ず ON になるためあり得ない                                                                                                                         |
 | OFF            | None                         | None                         | Unknown                    | （あり得ない）None が連続で報告されることはない                                                                                                                                                                |
+
+### エージェント（WIP）
+
+```mermaid
+sequenceDiagram
+    participant OS
+    participant Agent
+    participant ManagementSystem
+
+    loop ハートビート間隔ごとに実行
+      Agent ->> +ManagementSystem: ハートビートの送信
+      ManagementSystem ->> -Agent: マニフェストの返却
+      Agent ->> +OS: キャッシュの更新
+      opt 電源を停止する && 電源停止中でない
+        Agent ->> ManagementSystem: 電源停止を開始したことを通知
+        Agent ->> OS: shutdown
+      end
+    end
+```
+
+- エージェントは、管理システムに向けて指定されたハートビート間隔で死活状況を報告する
+  - 電源ステータス（ON/Stopping）
+- 死活状況を報告した際に、管理システムからマニフェストを受け取る
+  - あるべき電源ステータス（ON/OFF）
+  - ハートビート間隔
+- マニフェストに書かれた情報に基づいてサーバーの電源を停止する
+- 電源を停止しようとしているときでも管理システムに対してハートビートは送信し続ける
+- 電源を停止しようとしているときに、電源を停止する旨のマニフェストを受け取ったとしてもシャットダウン処理は重複して行わない
+
+### ログイン画面（/login）（WIP）
+
+ユーザーの認証を行う画面。
+
+#### ユーザーの認証
+
+```mermaid
+graph TD
+  Access[ログイン画面へアクセス] --> IsAlreadyVerified[すでに認証済みか]
+  IsAlreadyVerified -- YES --> ToServersPage[サーバー管理画面へ遷移]
+  IsAlreadyVerified -- NO --> ShowLoginForm[ログインフォーム表示]
+  ShowLoginForm --> Login[ログイン試行]
+  Login --> IsVerified{認証に成功したか}
+  IsVerified -- YES --> ToServersPage[サーバー管理画面へ遷移]
+  IsVerified -- NO --> CheckFailedCount[5回以上ログインに失敗したか]
+  CheckFailedCount -- YES --> Block[管理システムを利用停止]
+  CheckFailedCount -- NO --> ShowError[エラーメッセージ表示]
+  ShowError --> ShowLoginForm
+```
+
+- ユーザーは ID とパスワードを用いて認証を行う
+- ユーザーは事前に登録されている必要があり、新規登録は行わない
+- 認証に成功した場合、セッションを発行し、以降のアクセスに対して認証済みとして扱う
+- セッションの有効期限は 24 時間とする
+- セッションの有効期限が切れていた場合は未認証状態となる
+- 管理システムが利用停止になった場合、ユーザーはログインすることができなくなる
+  - DB の値を書き換えない限り復旧できない
+
+### サーバー管理画面（/servers）（WIP）
+
+サーバーを個別に管理する画面。
+
+#### 管理下にあるサーバーの一覧表示
+
+```mermaid
+graph TD
+  Access[サーバー管理画面へアクセス] --> ShowServerList[サーバー一覧を表示]
+```
+
+- 管理下にある各サーバーの情報を一覧を表示する
+  - サーバー名
+  - サーバーに割り振られる一意の ID
+  - 電源ステータス
+  - アクチュアルステータス
+  - 電源ボタン
+    - 電源ステータスが OFF または Unknown の場合は ON ボタンを表示
+    - 電源ステータスが ON の場合は OFF ボタンを表示
+  - サーバーの詳細情報を表示するボタン
+
+#### サーバーの電源起動
+
+```mermaid
+graph TD
+  ClickTurnOnButton[対象のサーバーの電源ONボタンをクリック] --> Starting[電源起動開始]
+  Starting --> ShowSnackbnar[起動開始したことをスナックバーで通知]
+```
+
+- 電源の起動は管理システムから対象のサーバーに対して Magic Packet を送出する（WoL）
+- 電源起動後のサーバーの電源ステータスは Starting となる
+
+#### サーバーの電源停止
+
+```mermaid
+graph TD
+  ClickTurnOffButton[対象のサーバーの電源OFFボタンをクリック] --> Stopping[電源停止開始]
+  Stopping --> ShowSnackbnar[停止開始したことをスナックバーで通知]
+```
+
+- 電源停止後のサーバーの電源ステータスは Stopping となる
+
+#### サーバーの詳細情報の表示
+
+```mermaid
+graph TD
+  ClickShowButton[詳細情報を表示するボタンをクリック] --> ShowModal[モーダルで詳細情報を表示]
+```
+
+- 以下の情報をモーダルで表示する
+  - サーバー名
+  - サーバーに割り振られる一意の ID
+  - 電源状態
+  - MAC アドレス
+  - ハートビート間隔
+  - 編集ボタン
+  - 削除ボタン
+
+#### サーバーの追加
+
+```mermaid
+graph TD
+  ClickCreateButton[追加ボタンをクリック] --> ShowCreateModal[追加画面をモーダルで表示]
+  ShowCreateModal --> Edit[サーバー情報を入力]
+  Edit --> Validate{入力内容に問題がないか}
+  Validate -- 問題なし --> Save[保存ボタンをクリック]
+  Validate -- 問題あり --> ShowError[エラー内容を表示] --> Edit
+  Save --> ShowAccessToken[アクセストークンを表示]
+  ShowAccessToken --> Confirm[確認ボタンをクリック]
+  Confirm --> CloseModal[モーダルを閉じる] --> ShowServerList[サーバー一覧を表示]
+  ShowServerList --> ShowSnackbnar[保存に成功したことをスナックバーで通知]
+```
+
+- サーバー追加モーダルを表示し、以下の内容を入力する
+  - サーバー名（必須）
+    - 1 文字以上の文字列
+  - MAC アドレス（必須）
+    - パターン: `/^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$/`
+  - ハートビート間隔（必須）
+    - 単位: s
+    - 正の整数のみ
+    - 初期値: 60s
+- アクセストークンは発行時のみ表示し、以降画面上に表示されることはない
+- アクセストークン表示時に使い方を明記する
+
+#### サーバーの編集
+
+```mermaid
+graph TD
+  ClickEditButton[詳細情報モーダルから編集ボタンをクリック] --> ShowEditModal[編集画面をモーダルで表示]
+  ShowEditModal --> Edit[サーバー情報を編集]
+  Edit --> Validate{入力内容に問題がないか}
+  Validate -- 問題なし --> Save[保存ボタンをクリック]
+  Validate -- 問題あり --> ShowError[エラー内容を表示] --> Edit
+  Save --> ShowDetailModal[サーバーの詳細情報表示画面をモーダルで表示]
+  ShowDetailModal --> ShowSnackbnar[保存に成功したことをスナックバーで通知]
+```
+
+- 編集モーダルは、詳細モーダルに重ねて表示するのではなく、詳細情報を表示していたモーダルの内容を編集フォームへと差し替えて表示する
+- 現在の設定がフォームに入力された状態で表示
+- 編集項目は「サーバーの追加」の内容と同じ
+
+#### サーバーの削除
+
+```mermaid
+graph TD
+  ClickDeleteButton[詳細情報モーダルから削除ボタンをクリック] --> ShowConfirm{本当に削除するかを確認する}
+  ShowConfirm -- YES --> RunDelete[削除を実行]
+  ShowConfirm -- NO --> DoNothing[なにもしない]
+  RunDelete --> CloseModal[モーダルを閉じる]
+  CloseModal --> ShowServerList[サーバー一覧を表示]
+  ShowServerList --> ShowSnackbnar[削除に成功したことをスナックバーで通知]
+```
+
+### ヘッダー・フッター・ナビゲーション
+
+#### ヘッダー
+
+- ヘッダー左側
+  - アプリケーション名（Cluster Power Manager）と現在のページ名を表示する
+- ヘッダー右側
+  - 人間のシルエットが描かれた丸いアイコンを表示
+  - アイコンをクリックすると、ドロップダウンで「ログアウト」ボタンが表示される
+  - ログアウトボタンをクリックするとログアウトが実行され、ログインページへと遷移する
+
+#### ナビゲーションバー
+
+- 画面左側にナビゲーションバーを在中させる
+- ナビゲーションには各ページへのリンクが存在する
+  - 現在はサーバー管理画面のみ
+
+#### エラー・警告通知（フッター）
+
+- エラー・・警告通知は常に最上位のレイヤーとして表示される
+  - モーダルよりも上に表示される
+- アプリケーションで規定されているエラーや、その他予期しないエラーが発生した場合はすべてフッターに表示する
+- フッターの右側にはバツボタンが表示されており、クリックするとフッターが閉じる
+
+### 非機能要求
+
+- 快適に管理システムを利用できるパフォーマンス
+  - 特にエージェントは在中するため、サーバーのリソースを大きく消費してはならない
+
+### 次回以降のリリース
+
+- サーバーセット管理画面の実装
+  - 登録した複数のサーバーに対して一括で電源操作を行う機能
