@@ -199,7 +199,7 @@ sequenceDiagram
 - 電源を停止しようとしているときでもマネージャーに対してハートビートは送信し続ける
 - 電源を停止しようとしているときに、電源を停止する旨のマニフェストを受け取ったとしてもシャットダウン処理は重複して行わない
 
-### ログイン画面（/login）（WIP）
+### ログイン画面（/login）
 
 ユーザーの認証を行う画面。
 
@@ -210,22 +210,21 @@ graph TD
   Access[ログイン画面へアクセス] --> IsAlreadyVerified[すでに認証済みか]
   IsAlreadyVerified -- YES --> ToServersPage[サーバー管理画面へ遷移]
   IsAlreadyVerified -- NO --> ShowLoginForm[ログインフォーム表示]
-  ShowLoginForm --> Login[ログイン試行]
+  ShowLoginForm --> isBlocking{ブロック中か}
+  isBlocking -- YES --> Blocking
+  isBlocking -- NO --> Login[ログイン試行]
   Login --> IsVerified{認証に成功したか}
   IsVerified -- YES --> ToServersPage[サーバー管理画面へ遷移]
   IsVerified -- NO --> CheckFailedCount[5回以上ログインに失敗したか]
-  CheckFailedCount -- YES --> Block[マネージャーを利用停止]
+  CheckFailedCount -- YES --> Blocking[マネージャーを<br>10分間利用停止]
   CheckFailedCount -- NO --> ShowError[エラーメッセージ表示]
   ShowError --> ShowLoginForm
 ```
 
 - ユーザーは ID とパスワードを用いて認証を行う
-- ユーザーは事前に登録されている必要があり、新規登録は行わない
-- 認証に成功した場合、セッションを発行し、以降のアクセスに対して認証済みとして扱う
-- セッションの有効期限は 24 時間とする
-- セッションの有効期限が切れていた場合は未認証状態となる
-- マネージャーが利用停止になった場合、ユーザーはログインすることができなくなる
-  - DB の値を書き換えない限り復旧できない
+- ユーザーの新規登録は行わない
+- 5 回以上ログインに失敗した場合、マネージャーを 10 分間利用停止する
+- 認証に成功した場合、サーバー管理画面へ遷移する
 
 ### サーバー管理画面（/servers）（WIP）
 
@@ -374,3 +373,29 @@ graph TD
 
 - サーバーセット管理画面の実装
   - 登録した複数のサーバーに対して一括で電源操作を行う機能
+
+## System Design
+
+### セキュリティ
+
+#### ユーザーの認証
+
+- ID とパスワードは環境変数で管理する
+  - ID: 文字列
+  - パスワード: scrypt でハッシュ化した文字列
+- 認証に成功した場合、cookie を用いてセッションを発行し、以降のアクセスを認証済みとして扱う
+- セッションの有効期限は 24 時間とする
+- セッションの有効期限が切れていた場合は未認証状態となる
+- マネージャーが利用停止になった場合、ユーザーはログインすることができなくなる
+- cookie の属性
+  - Name: session_id
+  - Value: ランダムな UUIDv4
+  - Path: /
+  - MaxAge: 86400 (24 時間)
+  - HttpOnly: true
+  - Secure: true
+  - SameSite: Strict
+
+#### CSRF 対策
+
+（執筆中）
