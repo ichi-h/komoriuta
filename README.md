@@ -226,7 +226,7 @@ graph TD
 - 5 回以上ログインに失敗した場合、マネージャーを 10 分間利用停止する
 - 認証に成功した場合、サーバー管理画面へ遷移する
 
-### サーバー管理画面（/servers）（WIP）
+### サーバー管理画面（/servers）
 
 サーバーを個別に管理する画面。
 
@@ -243,9 +243,15 @@ graph TD
   - 電源ステータス
   - カレントステータス
   - 電源ボタン
-    - 電源ステータスが OFF または Unknown の場合は ON ボタンを表示
+    - 電源ステータスが OFF の場合は ON ボタンを表示
     - 電源ステータスが ON の場合は OFF ボタンを表示
-  - サーバーの詳細情報を表示するボタン
+
+#### サーバーの詳細ページへ遷移
+
+```mermaid
+graph TD
+  ClickServerName[サーバー名をクリック] --> ToServerDetailPage[サーバー詳細画面へ遷移]
+```
 
 #### サーバーの電源起動
 
@@ -267,22 +273,6 @@ graph TD
 ```
 
 - 電源停止後のサーバーの電源ステータスは Stopping となる
-
-#### サーバーの詳細情報の表示
-
-```mermaid
-graph TD
-  ClickShowButton[詳細情報を表示するボタンをクリック] --> ShowModal[モーダルで詳細情報を表示]
-```
-
-- 以下の情報をモーダルで表示する
-  - サーバー名
-  - サーバーに割り振られる一意の ID
-  - 電源状態
-  - MAC アドレス
-  - ハートビート間隔
-  - 編集ボタン
-  - 削除ボタン
 
 #### サーバーの追加
 
@@ -307,24 +297,55 @@ graph TD
   - ハートビート間隔（必須）
     - 単位: s
     - 正の整数のみ
-    - 初期値: 60s
+    - 初期値: 10s
 - アクセストークンは発行時のみ表示し、以降画面上に表示されることはない
 - アクセストークン表示時に使い方を明記する
+
+### サーバー詳細画面（/servers/{id}）
+
+#### サーバーの詳細情報の表示
+
+```mermaid
+graph TD
+  Access[サーバー詳細画面へアクセス] --> ShowServerDetail[サーバーの詳細情報を表示]
+```
+
+- 以下の情報を表示する
+  - サーバー名
+  - サーバーに割り振られる一意の ID
+  - 電源状態
+  - MAC アドレス
+  - ハートビート間隔
+  - 電源ボタン
+  - 編集ボタン
+  - アクセストークンのローテーションボタン
+  - 削除ボタン
+
+#### サーバーのアクセストークンのローテーション
+
+```mermaid
+graph TD
+  ClickRotation[アクセストークンのローテーションボタンをクリック] --> ConfirmRotation{モーダルで本当にローテーションするか確認}
+  ConfirmRotation -->|YES| Rotation[ローテーション]
+  ConfirmRotation -->|NO| BackToDetail[詳細画面に戻る]
+  Rotation --> ShowNewToken[新しいアクセストークンを表示]
+  ShowNewToken --> Confirm[確認ボタンをクリック]
+  Confirm --> CloseModal[モーダルを閉じる] --> ShowServerDetail[詳細画面を表示]
+  ShowServerDetail --> ShowSnackbnar[更新に成功したことをスナックバーで通知]
+```
 
 #### サーバーの編集
 
 ```mermaid
 graph TD
-  ClickEditButton[詳細情報モーダルから編集ボタンをクリック] --> ShowEditModal[編集画面をモーダルで表示]
-  ShowEditModal --> Edit[サーバー情報を編集]
+  ClickEditButton[編集ボタンをクリック] --> Edit[サーバー情報を編集]
   Edit --> Validate{入力内容に問題がないか}
   Validate -- 問題なし --> Save[保存ボタンをクリック]
   Validate -- 問題あり --> ShowError[エラー内容を表示] --> Edit
-  Save --> ShowDetailModal[サーバーの詳細情報表示画面をモーダルで表示]
-  ShowDetailModal --> ShowSnackbnar[保存に成功したことをスナックバーで通知]
+  Save --> ShowDetail[詳細情報画面を表示]
+  ShowDetail --> ShowSnackbnar[保存に成功したことをスナックバーで通知]
 ```
 
-- 編集モーダルは、詳細モーダルに重ねて表示するのではなく、詳細情報を表示していたモーダルの内容を編集フォームへと差し替えて表示する
 - 現在の設定がフォームに入力された状態で表示
 - 編集項目は「サーバーの追加」の内容と同じ
 
@@ -332,7 +353,7 @@ graph TD
 
 ```mermaid
 graph TD
-  ClickDeleteButton[詳細情報モーダルから削除ボタンをクリック] --> ShowConfirm{本当に削除するかを確認する}
+  ClickDeleteButton[削除ボタンをクリック] --> ShowConfirm{モーダルで本当に削除するかを確認する}
   ShowConfirm -- YES --> RunDelete[削除を実行]
   ShowConfirm -- NO --> DoNothing[なにもしない]
   RunDelete --> CloseModal[モーダルを閉じる]
@@ -395,6 +416,10 @@ graph TD
   - HttpOnly: true
   - Secure: true
   - SameSite: Strict
+
+#### アクセストークン
+
+（執筆中）
 
 #### CSRF 対策
 
