@@ -164,7 +164,7 @@
 | OFF            | None                         | Stopping                     | Error              | （あり得ない）一度電源が落ちた状態から初回のハートビートは必ず Launched になるためあり得ない                                                                                                                   |
 | OFF            | None                         | None                         | Error              | （あり得ない）None が連続で報告されることはない                                                                                                                                                                |
 
-### エージェント（WIP）
+### 全体のシーケンス図
 
 ```mermaid
 sequenceDiagram
@@ -173,21 +173,28 @@ sequenceDiagram
     participant Manager
 
     loop ハートビート間隔ごとに実行
-      Agent ->> +Manager: ハートビートの送信
+      Agent ->> +Manager: マニフェストの取得
       Manager ->> -Agent: マニフェストの返却
       Agent ->> +OS: キャッシュの更新
+
+      alt エージェントを起動した直後
+        Agent ->> +Manager: 初回ハートビートの送信（Heartbeat Status: Launched）
+      else それ以外
+        Agent ->> +Manager: ハートビートの送信 （Heartbeat Status: ON または Stopping）
+      end
+
       opt 電源を停止する && 電源停止中でない
-        Agent ->> Manager: 電源停止を開始したことを通知
         Agent ->> OS: shutdown
       end
     end
 ```
 
-- エージェントは、マネージャーに向けて指定されたハートビート間隔で死活状況を報告する
-  - 電源ステータス（ON/Stopping）
-- 死活状況を報告した際に、マネージャーからマニフェストを受け取る
+- マネージャーからマニフェストを受け取る
   - あるべき電源ステータス（ON/OFF）
   - ハートビート間隔
+- エージェントは、マネージャーに向けて指定されたハートビート間隔で死活状況を報告する
+  - 電源ステータス（Launched/ON/Stopping）
+  - 初回のハートビートは Launched として報告する
 - マニフェストに書かれた情報に基づいてサーバーの電源を停止する
 - 電源を停止しようとしているときでもマネージャーに対してハートビートは送信し続ける
 - 電源を停止しようとしているときに、電源を停止する旨のマニフェストを受け取ったとしてもシャットダウン処理は重複して行わない
