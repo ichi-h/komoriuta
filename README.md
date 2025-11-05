@@ -170,14 +170,14 @@
 sequenceDiagram
     participant OS
     participant Agent
-    participant ManagementSystem
+    participant Manager
 
     loop ハートビート間隔ごとに実行
-      Agent ->> +ManagementSystem: ハートビートの送信
-      ManagementSystem ->> -Agent: マニフェストの返却
+      Agent ->> +Manager: ハートビートの送信
+      Manager ->> -Agent: マニフェストの返却
       Agent ->> +OS: キャッシュの更新
       opt 電源を停止する && 電源停止中でない
-        Agent ->> ManagementSystem: 電源停止を開始したことを通知
+        Agent ->> Manager: 電源停止を開始したことを通知
         Agent ->> OS: shutdown
       end
     end
