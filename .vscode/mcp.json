@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "serena": {
+      "type": "stdio",
+      "args": ["start-mcp-server"],
+      "command": "/nix/store/hzjfakw4ilalm7ydw9g6qmg074v91ivn-serena-0.1.4-unstable-2025-10-15/bin/serena",
+      "env": {}
+    }
+  },
+  "inputs": []
+}
