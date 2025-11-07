@@ -37,6 +37,27 @@ graph TD
 ## Database
 
 - RDB: sqlite
+- DELETE は物理削除で行う
+
+### Tables
+
+```mermaid
+erDiagram
+  servers {
+    INTEGER id PK
+    TEXT uuid
+    TEXT name
+    TEXT mac_address
+    TEXT access_token_hash "hashed with scrypt"
+    INTEGER power_status "0: OFF, 1: ON"
+    INTEGER heartbeat_status "0: None, 1: Launched, 2: ON, 3: Stopping"
+    INTEGER previous_heartbeat_status "0: None, 1: Launched, 2: ON, 3: Stopping"
+    INTEGER heartbeat_interval "in seconds"
+    DATETIME last_heartbeat_at
+    DATETIME created_at
+    DATETIME updated_at
+  }
+```
 
 ## Manager
 
