@@ -399,21 +399,64 @@ graph TD
 
 ## System Design
 
+### Architecture
+
+```mermaid
+graph TD
+  subgraph Same Network
+    subgraph Server1
+      Agent1[Agent]
+      OS1[OS]
+    end
+    subgraph Server2
+      Agent2[Agent]
+      OS2[OS]
+    end
+    subgraph Server3
+      Agent3[Agent]
+      OS3[OS]
+    end
+    subgraph ManagerServer
+      Manager[Manager]
+      DB[(Database)]
+    end
+  end
+
+  Agent1 -- Request Heartbeat / Manifest --> Manager
+  Agent2 -- Request Heartbeat / Manifest --> Manager
+  Agent3 -- Request Heartbeat / Manifest --> Manager
+  Manager -- WoL --> Server1
+  Manager -- WoL --> Server2
+  Manager -- WoL --> Server3
+  Agent1 -- Shutdown Command --> OS1
+  Agent2 -- Shutdown Command --> OS2
+  Agent3 -- Shutdown Command --> OS3
+```
+
 ### Database
 
-### Protocols
-
-- Manager/Agent 間の通信は Connect を用いる
+- RDB: sqlite
 
 ### Manager
 
 #### Technology Stack
 
+- Language: TS (Bun)
+- Backend Framework: ElysiaJS
+- UI Framework: React
+
 #### API
+
+- Protocol: http/https
+- Schema: Connect
+
+see: [./proto/](/proto/)
 
 ### Agent
 
 #### Technology Stack
+
+- Language: Go
 
 #### Usage
 
