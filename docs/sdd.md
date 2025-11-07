@@ -147,7 +147,7 @@ sequenceDiagram
 - エージェントの設定を変更する
 - args/option
   - target: 設定を変更する対象（manager_url または access_token）
-- 値は対話形式で入力する
+- 指定された値を対話形式で入力する
   - バリデーション等は `komoriuta init` と同様
 - 入力された値で対象の設定を上書きする
 - 例外
