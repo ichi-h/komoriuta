@@ -40,13 +40,13 @@ graph TD
 
 ## Manager
 
-## Technology Stack
+### Technology Stack
 
 - Language: TS (Bun)
 - Backend Framework: ElysiaJS
 - UI Framework: React
 
-## API
+### API
 
 - Protocol: http/https
 - Schema: Connect
@@ -55,15 +55,15 @@ see: [./proto/](/proto/)
 
 ## Agent
 
-## Technology Stack
+### Technology Stack
 
 - Language: Go
 
-## Usage
+### Usage
 
 ## Security
 
-## ユーザーの認証
+### ユーザーの認証
 
 - ID とパスワードは環境変数で管理する
   - ID: 文字列
@@ -81,7 +81,7 @@ see: [./proto/](/proto/)
   - Secure: true
   - SameSite: Strict
 
-## アクセストークン
+### アクセストークン
 
 - エージェントからマネージャーへリクエストする際の認証は Bearer Token 方式を採用する
   - リクエストヘッダーに `Authorization: Bearer {access_token}` を付与する
@@ -94,13 +94,13 @@ see: [./proto/](/proto/)
   - 0 秒を指定することで無期限に設定可能
 - ローテーションを実行した場合、保存していたアクセストークンのハッシュ値を上書きする
 
-## CSRF 対策
+### CSRF 対策
 
 - CORS にて同一オリジンからのリクエストのみ許可する
 - リクエストをすべて単純でないリクエストとし、必ず preflight request を発行させる
 - cookie の SameSite 属性を Strict に設定する
 
-## http/https
+### http/https
 
 - localhost 以外からのアクセスに対しては HTTPS を強制する
 - localhost からのアクセスに対しては HTTP を許可する
