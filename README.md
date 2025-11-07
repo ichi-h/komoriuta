@@ -334,6 +334,8 @@ graph TD
   ShowServerDetail --> ShowSnackbnar[更新に成功したことをスナックバーで通知]
 ```
 
+- アクセストークンのローテーションを実行した場合、既存のアクセストークンは無効化される
+
 #### サーバーの編集
 
 ```mermaid
@@ -397,7 +399,25 @@ graph TD
 
 ## System Design
 
-### セキュリティ
+### Database
+
+### Protocols
+
+- Manager/Agent 間の通信は Connect を用いる
+
+### Manager
+
+#### Technology Stack
+
+#### API
+
+### Agent
+
+#### Technology Stack
+
+#### Usage
+
+### Security
 
 #### ユーザーの認証
 
@@ -419,8 +439,24 @@ graph TD
 
 #### アクセストークン
 
-（執筆中）
+- エージェントからマネージャーへリクエストする際の認証は Bearer Token 方式を採用する
+  - リクエストヘッダーに `Authorization: Bearer {access_token}` を付与する
+- 発行されたアクセストークンは、サーバーと紐づけて DB 上に保存する
+- DB 上ではアクセストークンは scrypt でハッシュ化して保存する
+- アクセストークンはランダムな 32 文字の英数字
+- アクセストークンの有効期限は環境変数で管理する
+  - 単位: 秒
+  - 初期値: 7776000 (90 日)
+  - 0 秒を指定することで無期限に設定可能
+- ローテーションを実行した場合、保存していたアクセストークンのハッシュ値を上書きする
 
 #### CSRF 対策
 
-（執筆中）
+- CORS にて同一オリジンからのリクエストのみ許可する
+- リクエストをすべて単純でないリクエストとし、必ず preflight request を発行させる
+- cookie の SameSite 属性を Strict に設定する
+
+#### http/https
+
+- localhost 以外からのアクセスに対しては HTTPS を強制する
+- localhost からのアクセスに対しては HTTP を許可する
