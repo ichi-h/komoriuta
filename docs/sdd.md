@@ -64,8 +64,24 @@ erDiagram
 ### Technology Stack
 
 - Language: TS (Bun)
+  - バックエンドとフロントエンドの言語を統一し、開発効率の向上を図る
+  - 高速な JS 実行環境
+  - 単一バイナリをコンテナで実行可能
+- Proxy: Bun Serve
+  - nginx 等を利用せずに bun 単体で http/https のプロキシが可能なため
 - Backend Framework: ElysiaJS
-- UI Framework: React
+  - JS 上最も高速なバックエンドフレームワーク
+  - Connect を用いて protobuf からサーバーコードを生成可能
+- UI Library: React
+  - 開発者の技術スタックとして React が最も馴染み深いこと
+- Design: shadcn/ui
+  - ある程度完成されたコンポーネントを活用しつつ、柔軟性や拡張性も確保できること
+- Containerization: Podman
+  - Docker 互換のコンテナランタイム
+  - rootless コンテナのサポート
+  - k8s との親和性
+  - 開発環境ではソースコードをマウントして使用
+  - 本番環境では単一バイナリへコンパイルし、軽量コンテナで実行
 
 ### API
 
@@ -79,6 +95,9 @@ see: [./proto/](/proto/)
 ### Technology Stack
 
 - Language: Go
+  - 単一バイナリで配布可能
+  - 必要十分なパフォーマンス
+  - Connect を用いて protobuf からクライアントコードを生成可能
 
 ### Usage
 
