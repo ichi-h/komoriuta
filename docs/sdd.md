@@ -34,6 +34,10 @@ graph TD
   Agent3 -- Shutdown Command --> OS3
 ```
 
+- サーバーの起動には Wake-on-LAN （WoL）を使用する
+  - サーバーの BIOS/UEFI で WoL が有効化されている
+  - マネージャーとサーバーが同一ネットワークセグメント内にある（またはルーターが WoL パケットを転送可能）
+
 ## Database
 
 - RDB: sqlite
@@ -53,7 +57,7 @@ erDiagram
     INTEGER previous_heartbeat_status "0: None, 1: Launched, 2: ON, 3: Stopping"
     INTEGER heartbeat_interval "ハートビート間隔（単位: 秒）"
     DATETIME last_heartbeat_at
-    DATETIME last_power_changed_at "電源ステータスを更新したとき、またはマネージャー自体が起動したときに更新"
+    DATETIME last_power_changed_at "電源ステータスを更新したときに更新"
     DATETIME created_at
     DATETIME updated_at
   }
@@ -62,6 +66,7 @@ erDiagram
     INTEGER id PK
     INTEGER server_id FK
     TEXT token_hash "scrypt でハッシュ化"
+    DATETIME expires_at "NULL の場合は無期限"
     DATETIME created_at
     DATETIME updated_at
   }
@@ -118,11 +123,14 @@ graph RL
 ### Usage
 
 - コマンド
-  - `komo-agent`
+  - `komo-manager`
 - 概要
   - マネージャーを起動する
 - args/option
-  - `--disable-file-log`: ファイル出力を無効化する（デフォルトでは有効）
+  - なし
+- environment variables
+  - `DISABLE_FILE_LOG=<boolean>`: ファイル出力を無効化する（デフォルト: false）
+  - `LOG_ROTATION_GENERATIONS=<number>`: ログローテーションで保存する世代数を指定する（デフォルト: 7）
 
 ### API
 
@@ -141,6 +149,7 @@ interface BaseLog {
 
 interface APILog extends BaseLog {
   type: "api";
+  procedure: string;
 
   // 機密情報はマスクすること
   requestHeader?: Record<string, string>;
@@ -149,9 +158,10 @@ interface APILog extends BaseLog {
   responseBody?: unknown;
 
   ipAddress: string;
+  durationMs: number;
 }
 
-interface HeartbeatWatchLog extends APILog {
+interface HeartbeatWatchLog extends BaseLog {
   type: "heartbeat_watch";
   serverID: number;
   serverUUID: string;
@@ -160,12 +170,13 @@ interface HeartbeatWatchLog extends APILog {
   previousHeartbeatStatus: "None" | "Launched" | "ON" | "Stopping";
   heartbeatStatus: "None" | "Launched" | "ON" | "Stopping";
   currentStatus:
+    | "Applying"
     | "ON"
     | "OFF"
     | "Starting"
-    | "BeforeStopping"
     | "Stopping"
-    | "ManuallyON"
+    | "SyncedON"
+    | "SyncedOFF"
     | "Lost"
     | "Error";
 }
@@ -174,6 +185,7 @@ interface ErrorLog extends BaseLog {
   type: "error";
   message: string;
   stackTrace?: string;
+  context?: Record<string, unknown>;
 }
 
 type LogEntry = APILog | HeartbeatWatchLog | ErrorLog;
@@ -184,7 +196,7 @@ type LogEntry = APILog | HeartbeatWatchLog | ErrorLog;
   - ハートビートの監視ロジック実行時
 - ログの出力先: 標準出力、および `/var/log/komoriuta/komo-manager.log.jsonl`
   - 標準出力は常に有効
-  - ファイル出力は実行時のオプションで無効化可能
+  - ファイル出力は環境変数で無効化可能
 - ログファイルの権限: 600
 - ログローテーション（ファイル出力が有効な場合のみ）:
   - logrotate を用いて、1 日ごとにローテーションを実行し、7 世代まで保存
@@ -369,7 +381,7 @@ sequenceDiagram
     - 電源を停止しようとしているときでもマネージャーに対してハートビートは送信し続ける
     - 電源を停止しようとしているときに、電源を停止する旨のマニフェストを受け取ったとしてもシャットダウン処理を重複して行わない
 - 例外
-  - マニフェストの取得やハートビートの送信など、マネージャーとの通信に失敗した場合、エージェントは 2 回までリトライを行い、それでも失敗する場合はエラーメッセージを表示して終了する
+  - マニフェストの取得やハートビートの送信など、マネージャーとの通信に失敗した場合、エージェントは 2 回までリトライを行い、それでも失敗する場合はエラーログを出力して次のハートビート間隔まで待機する
 
 ### Config
 
@@ -461,7 +473,7 @@ type LogEntry = SignalLog | HeartbeatLog | ErrorLog;
   - 初期値: 86400 (24 時間)
   - バリデーション: 1 以上の整数
 - セッションの有効期限が切れていた場合は未認証状態となる
-- マネージャーが利用停止になった場合、ユーザーはログインすることができなくなる
+- セッションはインメモリで管理する
 - cookie の属性
   - Name: session_id
   - Value: ランダムな UUIDv4
@@ -470,6 +482,7 @@ type LogEntry = SignalLog | HeartbeatLog | ErrorLog;
   - HttpOnly: true
   - Secure: true
   - SameSite: Strict
+- 連続したログイン失敗時の IP アドレスによるアクセス制限はインメモリで管理する
 
 ### アクセストークン
 
@@ -483,7 +496,7 @@ type LogEntry = SignalLog | HeartbeatLog | ErrorLog;
 - バリデーション
   - 0 以上の整数
 - エージェントからマネージャーへリクエストする際の認証は Bearer Token 方式を採用する
-  - リクエストヘッダーに Base64 でエンコードしたアクセストークンを `Authorization: Bearer {access_token}` の形式で含める
+  - リクエストヘッダーにアクセストークンを `Authorization: Bearer {access_token}` の形式で含める
 - 発行されたアクセストークンは、サーバーと紐づけて DB 上に保存する
 - DB 上ではアクセストークンは scrypt でハッシュ化して保存する
 - ローテーションを実行した場合、保存していたアクセストークンのハッシュ値を上書きする
