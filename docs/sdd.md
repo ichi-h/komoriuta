@@ -131,10 +131,6 @@ graph RL
 
 see: [./proto/](/proto/)
 
-### エージェントの監視について
-
-（設計中）
-
 ### Logs
 
 ```ts
