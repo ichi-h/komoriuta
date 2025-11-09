@@ -115,6 +115,15 @@ graph RL
   - 開発環境ではソースコードをマウントして使用
   - 本番環境では単一バイナリへコンパイルし、軽量コンテナで実行
 
+### Usage
+
+- コマンド
+  - `komo-agent`
+- 概要
+  - マネージャーを起動する
+- args/option
+  - `--disable-file-log`: ファイル出力を無効化する（デフォルトでは有効）
+
 ### API
 
 - Protocol: http/https
@@ -177,9 +186,9 @@ type LogEntry = APILog | HeartbeatWatchLog | ErrorLog;
 - タイミング
   - 各 API のレスポンス返却時
   - ハートビートの監視ロジック実行時
-- ログの出力先: 標準出力、および `/var/log/komoriuta/manager.log.jsonl`
+- ログの出力先: 標準出力、および `/var/log/komoriuta/komo-manager.log.jsonl`
   - 標準出力は常に有効
-  - ファイル出力は環境変数で有効化可能
+  - ファイル出力は実行時のオプションで無効化可能
 - ログファイルの権限: 600
 - ログローテーション（ファイル出力が有効な場合のみ）:
   - logrotate を用いて、1 日ごとにローテーションを実行し、7 世代まで保存
@@ -382,7 +391,66 @@ interface AgentConfig {
 
 ### Logs
 
-（設計中）
+#### 共通
+
+- ログファイルの権限: 600
+- ログローテーション（ファイル出力が有効な場合のみ）:
+  - logrotate を用いて、1 日ごとにローテーションを実行し、7 世代まで保存
+  - 世代数は Config から変更可能
+- ログフォーマット: JSON Lines
+
+#### komo-agent
+
+```ts
+interface LogEntry {
+  level: "INFO" | "WARN" | "ERROR";
+  timestamp: string; // ISO 8601 format
+  command: "init" | "set" | "enable" | "disable" | "reload" | "status";
+  args: string[];
+  message: string;
+}
+```
+
+- タイミング
+  - 各コマンドの実行時
+- ログの出力先: `/var/log/komoriuta/komo-agent.log.jsonl`
+
+#### komolet
+
+```ts
+interface BaseLog {
+  level: "INFO" | "WARN" | "ERROR";
+  timestamp: string; // ISO 8601 format
+}
+
+interface SignalLog extends BaseLog {
+  type: "signal";
+  signal: "START" | "STOP" | "RELOAD";
+}
+
+interface HeartbeatLog extends BaseLog {
+  type: "heartbeat";
+  serverUUID: string;
+  heartbeatStatus: "Launched" | "ON" | "Stopping";
+  powerStatus: "ON" | "OFF";
+}
+
+interface ErrorLog extends BaseLog {
+  type: "error";
+  message: string;
+  stackTrace?: string;
+}
+
+type LogEntry = SignalLog | HeartbeatLog | ErrorLog;
+```
+
+- タイミング
+  - シグナルを受信したとき
+  - ハートビートの送信時
+  - エラーが発生したとき
+- ログの出力先: 標準出力および `/var/log/komoriuta/komolet.log.jsonl`
+  - 標準出力は常に有効
+  - ファイル出力は Config から有効化可能
 
 ## Security
 
