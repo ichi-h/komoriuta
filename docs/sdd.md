@@ -254,9 +254,10 @@ graph RL
       - 機密情報のため、入力した内容は画面に表示しない
       - バリデーション
         - 32 文字の大小英数字であること
-  - 上記の設定を `/etc/komoriuta/config.json` に保存する
-    - すでに設定ファイルが存在する場合は上書きする
+  - 上記の設定を Config に保存する
+    - 稼働ステータスは disabled に設定する
 - 例外
+  - すでに設定ファイルが存在する場合、エラーメッセージを表示して終了する
   - バリデーションに失敗した場合、エラーメッセージを表示して終了する
 
 #### `komo-agent set [target]`
@@ -270,7 +271,7 @@ graph RL
     - バリデーション等は `komo-agent init` と同様
   - 入力された値で対象の設定を上書きする
 - 例外
-  - `/etc/komoriuta/config.json` が存在しない場合、エラーメッセージを表示して終了する
+  - Config が存在しない場合、エラーメッセージを表示して終了する
   - target が不正な場合、エラーメッセージを表示して終了する
   - 不正な値が入力された場合、エラーメッセージを表示して終了する
 
@@ -281,10 +282,10 @@ graph RL
 - args/option
   - なし
 - 処理内容
-  - `/etc/komoriuta/config.json` の稼働ステータスを enabled に更新する
+  - Config の稼働ステータスを enabled に更新する
   - `komolet` が無効になっていた場合は、`komolet` へ開始シグナルを送信する
 - 例外
-  - `/etc/komoriuta/config.json` が存在しない場合、エラーメッセージを表示して終了する
+  - Config が存在しない場合、エラーメッセージを表示して終了する
   - localhost 以外の URL でマネージャーと http 通信を行おうとした場合、 https で通信するよう通知するエラーメッセージを表示して終了する
 
 #### `komo-agent disable`
@@ -294,7 +295,7 @@ graph RL
 - args/option
   - なし
 - 処理内容
-  - `/etc/komoriuta/config.json` の稼働ステータスを disabled に更新する
+  - Config の稼働ステータスを disabled に更新する
   - `komolet` が有効になっていた場合は、`komolet` へ停止シグナルを送信する
 
 #### `komo-agent reload`
@@ -340,7 +341,7 @@ sequenceDiagram
 ```
 
 - 処理内容
-  - `/etc/komoriuta/config.json` を読み込む
+  - Config を読み込む
   - エージェントが disabled の場合、komolet のプロセスを終了する
   - マネージャーからマニフェストを受け取る
     - あるべき電源ステータス（ON/OFF）
@@ -356,7 +357,15 @@ sequenceDiagram
 
 ### Config
 
-（設計中）
+Config は `/etc/komoriuta/config.json` に JSON 形式で保存される
+
+```ts
+interface AgentConfig {
+  enabled: boolean;
+  managerURL: string;
+  accessToken: string;
+}
+```
 
 ### Logs
 
