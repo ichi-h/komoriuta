@@ -48,12 +48,13 @@ erDiagram
     TEXT uuid
     TEXT name
     TEXT mac_address
-    TEXT access_token_hash "hashed with scrypt"
+    TEXT access_token_hash "scrypt でハッシュ化"
     INTEGER power_status "0: OFF, 1: ON"
     INTEGER heartbeat_status "0: None, 1: Launched, 2: ON, 3: Stopping"
     INTEGER previous_heartbeat_status "0: None, 1: Launched, 2: ON, 3: Stopping"
-    INTEGER heartbeat_interval "in seconds"
+    INTEGER heartbeat_interval "ハートビート間隔（単位: 秒）"
     DATETIME last_heartbeat_at
+    DATETIME last_power_changed_at "電源ステータスを更新したとき、またはマネージャー自体が起動したときに更新"
     DATETIME created_at
     DATETIME updated_at
   }
