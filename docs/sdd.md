@@ -91,6 +91,66 @@ erDiagram
 
 see: [./proto/](/proto/)
 
+### Logs
+
+```ts
+interface BaseLog {
+  level: "INFO" | "WARN" | "ERROR";
+  timestamp: string; // ISO 8601 format
+}
+
+interface APILog extends BaseLog {
+  type: "api";
+
+  // 機密情報はマスクすること
+  requestHeader?: Record<string, string>;
+  requestBody?: unknown;
+  responseHeader?: Record<string, string>;
+  responseBody?: unknown;
+
+  ipAddress: string;
+}
+
+interface HeartbeatWatchLog extends APILog {
+  type: "heartbeat_watch";
+  serverID: number;
+  serverUUID: string;
+  serverName: string;
+  powerStatus: "ON" | "OFF";
+  previousHeartbeatStatus: "None" | "Launched" | "ON" | "Stopping";
+  heartbeatStatus: "None" | "Launched" | "ON" | "Stopping";
+  currentStatus:
+    | "ON"
+    | "OFF"
+    | "Starting"
+    | "BeforeStopping"
+    | "Stopping"
+    | "ManuallyON"
+    | "Lost"
+    | "Error";
+}
+
+interface ErrorLog extends BaseLog {
+  type: "error";
+  message: string;
+  stackTrace?: string;
+}
+
+type LogEntry = APILog | HeartbeatWatchLog | ErrorLog;
+```
+
+- タイミング
+  - 各 API のレスポンス返却時
+  - ハートビートの監視ロジック実行時
+- ログの出力先: 標準出力、および `/var/log/komoriuta/manager.log.jsonl`
+  - 標準出力は常に有効
+  - ファイル出力は環境変数で有効化可能
+- ログファイルの権限: 600
+- ログローテーション（ファイル出力が有効な場合のみ）:
+  - logrotate を用いて、1 日ごとにローテーションを実行し、7 世代まで保存
+  - 世代数は環境変数で変更可能
+- ログフォーマット: JSON Lines
+
 ## Agent
 
 ### Technology Stack
