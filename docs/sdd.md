@@ -62,6 +62,28 @@ erDiagram
 
 ## Manager
 
+マネージャーは `komo-manager` という 単一の実行ファイルで動作し、バックエンドとフロントエンド、及びそれらのプロキシで構成される
+
+```mermaid
+graph RL
+  subgraph "komo-manager"
+    Backend
+    Frontend
+    Proxy
+  end
+
+  subgraph Server
+    Agent
+  end
+
+  User
+
+  User -- Access UI --> Proxy
+  Agent -- Request Heartbeat / Manifest --> Proxy
+  Proxy -- Forward Request --> Frontend
+  Proxy -- Forward API Request --> Backend
+```
+
 ### Technology Stack
 
 - Language: TS (Bun)
@@ -69,7 +91,7 @@ erDiagram
   - 高速な JS 実行環境
   - 単一バイナリをコンテナで実行可能
 - Proxy: Bun Serve
-  - nginx 等を利用せずに bun 単体で http/https のプロキシが可能なため
+  - nginx 等を利用せずに bun 単体で http/https のプロキシが可能
 - Backend Framework: ElysiaJS
   - JS 上最も高速なバックエンドフレームワーク
   - Connect を用いて protobuf からサーバーコードを生成可能
@@ -90,6 +112,10 @@ erDiagram
 - Schema: Connect
 
 see: [./proto/](/proto/)
+
+### エージェントの監視について
+
+（設計中）
 
 ### Logs
 
@@ -153,6 +179,29 @@ type LogEntry = APILog | HeartbeatWatchLog | ErrorLog;
 
 ## Agent
 
+Agent は `komo-agent` というコマンドラインツールと、`komolet` というバックエンドプロセスの 2 つのコンポーネントで構成される
+
+```mermaid
+graph RL
+  Manager
+
+  subgraph Server
+    komo-agent
+    komolet
+    Config
+
+    Config ~~~ komolet
+  end
+
+  User
+
+  User -- Run command --> komo-agent
+  komo-agent -- Read/Write --> Config
+  komo-agent -- Send signal --> komolet
+  komolet -- Read --> Config
+  komolet -- Request Heartbeat / Manifest --> Manager
+```
+
 ### Technology Stack
 
 - Language: Go
@@ -160,102 +209,158 @@ type LogEntry = APILog | HeartbeatWatchLog | ErrorLog;
   - 必要十分なパフォーマンス
   - Connect を用いて protobuf からクライアントコードを生成可能
 
-### Usage
+### komo-agent Usage
 
-電源管理には root 権限が必要であるため、help 以外のコマンドを sudo なしで実行された場合はエラーを返して終了する。
+設定の読み書きや komolet のプロセス管理には root 権限が必要になるため、help/version 以外のコマンドを sudo なしで実行した場合はエラーを返して終了する。
 
-#### `komoriuta help`
+#### `komo-agent help`
 
-- コマンドの使い方を表示する
+- 概要
+  - コマンドの使い方を表示する
 - args/option
   - なし
 - 利用可能なコマンドは他の項目を参照
 
-#### `komoriuta version`
+#### `komo-agent version`
 
-- エージェントのバージョン情報を表示する
+- 概要
+  - エージェントのバージョン情報を表示する
 - args/option
   - なし
 
-#### `komoriuta init`
+#### `komo-agent status`
 
-エージェントの初期設定を行う
-
+- 概要
+  - エージェントの現在の状態を表示する
 - args/option
   - なし
-- エージェントを動かすために必要な情報を対話形式で入力する
+- 表示内容
+  - エージェントの稼働状況（enabled/disabled）
   - マネージャーの URL
-    - バリデーション
-      - 有効な URL であること
-      - localhost でない場合は https スキームであること
-  - アクセストークン
-    - 機密情報のため、入力した内容は画面に表示しない
-    - バリデーション
-      - 32 文字の大小英数字であること
-- 上記の設定を `/etc/komoriuta/config.json` に保存する
-  - すでに設定ファイルが存在する場合は上書きする
-- 例外処理
-  - バリデーションに失敗した場合、エージェントはエラーメッセージを表示して終了する
-  - その他の予期しないエラーが発生した場合、エージェントはエラーログを `/var/log/komoriuta/error.log` に出力して終了する
 
-#### `komoriuta run`
+#### `komo-agent init`
 
-エージェントを起動し、マネージャーと通信を開始する
+- 概要
+  - エージェントの初期設定を行う
+- args/option
+  - なし
+- 処理内容
+  - エージェントを動かすために必要な情報を対話形式で入力する
+    - マネージャーの URL
+      - バリデーション
+        - 有効な URL であること
+        - localhost でない場合は https スキームであること
+    - アクセストークン
+      - 機密情報のため、入力した内容は画面に表示しない
+      - バリデーション
+        - 32 文字の大小英数字であること
+  - 上記の設定を `/etc/komoriuta/config.json` に保存する
+    - すでに設定ファイルが存在する場合は上書きする
+- 例外
+  - バリデーションに失敗した場合、エラーメッセージを表示して終了する
+
+#### `komo-agent set [target]`
+
+- 概要
+  - エージェントの設定を変更する
+- args/option
+  - target: 設定を変更する対象（manager_url または access_token）
+- 処理内容
+  - 指定された値を対話形式で入力する
+    - バリデーション等は `komo-agent init` と同様
+  - 入力された値で対象の設定を上書きする
+- 例外
+  - `/etc/komoriuta/config.json` が存在しない場合、エラーメッセージを表示して終了する
+  - target が不正な場合、エラーメッセージを表示して終了する
+  - 不正な値が入力された場合、エラーメッセージを表示して終了する
+
+#### `komo-agent enable`
+
+- 概要
+  - マネージャーと通信を開始する
+- args/option
+  - なし
+- 処理内容
+  - `/etc/komoriuta/config.json` の稼働ステータスを enabled に更新する
+  - `komolet` が無効になっていた場合は、`komolet` へ開始シグナルを送信する
+- 例外
+  - `/etc/komoriuta/config.json` が存在しない場合、エラーメッセージを表示して終了する
+  - localhost 以外の URL でマネージャーと http 通信を行おうとした場合、 https で通信するよう通知するエラーメッセージを表示して終了する
+
+#### `komo-agent disable`
+
+- 概要
+  - マネージャーとの通信を停止する
+- args/option
+  - なし
+- 処理内容
+  - `/etc/komoriuta/config.json` の稼働ステータスを disabled に更新する
+  - `komolet` が有効になっていた場合は、`komolet` へ停止シグナルを送信する
+
+#### `komo-agent reload`
+
+- 概要
+  - `komolet` のプロセスに設定ファイルの再読み込みを指示する
+- args/option
+  - なし
+- 処理内容
+  - `komolet` のプロセスにシグナルを送信して設定ファイルの再読み込みを指示する
+
+### komolet Usage
+
+komolet は systemd 等のプロセスマネージャーにて動作することを想定している。
 
 ```mermaid
 sequenceDiagram
     participant OS
-    participant Agent
+    participant komolet
     participant Manager
 
+    komolet ->> +OS: Configを読み込み
+
+    opt エージェントが無効化されている
+      komolet ->> OS: komoletのプロセスを終了
+    end
+
     loop ハートビート間隔ごとに実行
-      Agent ->> +Manager: マニフェストの取得
-      Manager ->> -Agent: マニフェストの返却
-      Agent ->> +OS: ローカルのマニフェストの更新
+      komolet ->> +Manager: マニフェストの取得
+      Manager ->> -komolet: マニフェストの返却
+      komolet ->> +OS: ローカルのマニフェストの更新
 
       alt エージェントを起動した直後
-        Agent ->> +Manager: 初回ハートビートの送信（Heartbeat Status: Launched）
+        komolet ->> +Manager: 初回ハートビートの送信（Heartbeat Status: Launched）
       else それ以外
-        Agent ->> +Manager: ハートビートの送信 （Heartbeat Status: ON または Stopping）
+        komolet ->> +Manager: ハートビートの送信 （Heartbeat Status: ON または Stopping）
       end
 
       opt 電源を停止する && 電源停止中でない
-        Agent ->> OS: shutdown
+        komolet ->> OS: shutdown
       end
     end
 ```
 
-- args/option
-  - なし
-- マネージャーからマニフェストを受け取る
-  - あるべき電源ステータス（ON/OFF）
-  - ハートビート間隔
-- エージェントは、マニフェストで指定されたハートビート間隔で、マネージャーへ死活状況を報告する
-  - ハートビートステータス（Launched/ON/Stopping）
-  - 報告のロジックは [./docs/srs.md](/docs/srs.md) を参照
-- 電源ステータスが OFF の場合、サーバーの電源を停止する
-  - 電源を停止しようとしているときでもマネージャーに対してハートビートは送信し続ける
-  - 電源を停止しようとしているときに、電源を停止する旨のマニフェストを受け取ったとしてもシャットダウン処理を重複して行わない
-- 例外処理
-  - `/etc/komoriuta/config.json` が存在しない場合、エージェントはエラーメッセージを表示して終了する
-  - マネージャーに接続できない場合、エージェントは 3 回までリトライを行い、それでも接続できない場合はエラーメッセージを表示して終了する
-  - マニフェストの取得やハートビートの送信に失敗した場合、エージェントは 3 回までリトライを行い、それでも失敗する場合はエラーメッセージを表示して終了する
-  - localhost 以外の URL で http 通信を行おうとした場合、エージェントは https で通信するよう通知するエラーメッセージを表示して終了する
-  - その他の予期しないエラーが発生した場合、エージェントはエラーログを `/var/log/komoriuta/error.log` に出力して終了する
-
-#### `komoriuta set [target]`
-
-- エージェントの設定を変更する
-- args/option
-  - target: 設定を変更する対象（manager_url または access_token）
-- 指定された値を対話形式で入力する
-  - バリデーション等は `komoriuta init` と同様
-- 入力された値で対象の設定を上書きする
+- 処理内容
+  - `/etc/komoriuta/config.json` を読み込む
+  - エージェントが disabled の場合、komolet のプロセスを終了する
+  - マネージャーからマニフェストを受け取る
+    - あるべき電源ステータス（ON/OFF）
+    - ハートビート間隔
+  - エージェントは、マニフェストで指定されたハートビート間隔で、マネージャーへ死活状況を報告する
+    - ハートビートステータス（Launched/ON/Stopping）
+    - 報告のロジックは [./docs/srs.md](/docs/srs.md) を参照
+  - 電源ステータスが OFF の場合、サーバーの電源を停止する
+    - 電源を停止しようとしているときでもマネージャーに対してハートビートは送信し続ける
+    - 電源を停止しようとしているときに、電源を停止する旨のマニフェストを受け取ったとしてもシャットダウン処理を重複して行わない
 - 例外
-  - `/etc/komoriuta/config.json` が存在しない場合、エージェントはエラーメッセージを表示して終了する
-  - target が不正な場合、エージェントはエラーメッセージを表示して終了する
-  - 不正な値が入力された場合、エージェントはエラーメッセージを表示して終了する
-  - その他の予期しないエラーが発生した場合、エージェントはエラーログを `/var/log/komoriuta/error.log` に出力して終了する
+  - マニフェストの取得やハートビートの送信など、マネージャーとの通信に失敗した場合、エージェントは 2 回までリトライを行い、それでも失敗する場合はエラーメッセージを表示して終了する
+
+### Config
+
+（設計中）
+
+### Logs
+
+（設計中）
 
 ## Security
 
