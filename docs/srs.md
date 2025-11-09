@@ -98,6 +98,7 @@
       - 条件: 電源ステータスが ON、かつ前回のハートビートステータスが Stopping、かつ現在のハートビートステータスが None
       - 補足:
         - 起動処理が開始された後、ハートビートステータスが Launched になるまでの間は電源ステータスを変更できない
+        - 5 分以上経過した場合は、電源の起動に失敗したとして、ユーザーへの通知とともに SyncedOFF に移行する
     - Stopping
       - 意味: 電源を停止中
       - 条件: 電源ステータスが OFF、かつハートビートステータスが Stopping
@@ -122,29 +123,29 @@
 
 ### 正常系
 
-| 電源ステータス | 前回のハートビートステータス | 現在受け取ったハートビートステータス | カレントステータス     | 状況                                                                                 |
-| -------------- | ---------------------------- | ------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------ |
-| ON/OFF         | -                            | -                                    | Applying               | 電源ステータスの変更を適用中                                                         |
-| ON             | Launched                     | ON                                   | ON                     | 正常稼働                                                                             |
-| ON             | Launched                     | None                                 | Lost / SyncedOFF (OFF) | エージェントとの通信途絶 or サーバーの電源が手動で OFF → 5 分経過で SyncedOFF へ移行 |
-| ON             | ON                           | ON                                   | ON                     | 正常稼働                                                                             |
-| ON             | ON                           | None                                 | Lost / SyncedOFF (OFF) | エージェントとの通信途絶 or サーバーの電源が手動で OFF → 5 分経過で SyncedOFF へ移行 |
-| ON             | Stopping                     | None                                 | Starting               | 電源起動中                                                                           |
-| ON             | None                         | Launched                             | ON                     | 電源が入った                                                                         |
-| ON             | None                         | ON                                   | ON                     | 通信できない状態から復帰した場合                                                     |
-| OFF            | Launched                     | Stopping                             | Stopping               | 停止処理開始                                                                         |
-| OFF            | Launched                     | None                                 | Lost / SyncedOFF (OFF) | エージェントとの通信途絶 or サーバーの電源が手動で OFF → 5 分経過で SyncedOFF へ移行 |
-| OFF            | ON                           | Stopping                             | Stopping               | 停止処理開始                                                                         |
-| OFF            | ON                           | None                                 | Lost / SyncedOFF (OFF) | エージェントとの通信途絶 or サーバーの電源が手動で OFF → 5 分経過で SyncedOFF へ移行 |
-| OFF            | Stopping                     | Stopping                             | Stopping               | シャットダウン中                                                                     |
-| OFF            | Stopping                     | None                                 | OFF                    | 正常に電源が落ちた                                                                   |
-| OFF            | None                         | Launched                             | SyncedON (ON)          | 電源ステータスを自動的に ON に変更                                                   |
-| OFF            | None                         | Stopping                             | Stopping               | 通信できない状態から復帰した場合                                                     |
+| 電源ステータス | 前回のハートビートステータス | 現在受け取ったハートビートステータス | カレントステータス         | 状況                                                                                 |
+| -------------- | ---------------------------- | ------------------------------------ | -------------------------- | ------------------------------------------------------------------------------------ |
+| ON/OFF         | -                            | -                                    | Applying                   | 電源ステータスの変更を適用中                                                         |
+| ON             | Launched                     | ON                                   | ON                         | 正常稼働                                                                             |
+| ON             | Launched                     | None                                 | Lost / SyncedOFF (OFF)     | エージェントとの通信途絶 or サーバーの電源が手動で OFF → 5 分経過で SyncedOFF へ移行 |
+| ON             | ON                           | ON                                   | ON                         | 正常稼働                                                                             |
+| ON             | ON                           | None                                 | Lost / SyncedOFF (OFF)     | エージェントとの通信途絶 or サーバーの電源が手動で OFF → 5 分経過で SyncedOFF へ移行 |
+| ON             | Stopping                     | None                                 | Starting / SyncedOFF (OFF) | 電源起動中 → 5 分経過で SyncedOFF へ移行                                             |
+| ON             | None                         | Launched                             | ON                         | 電源が入った                                                                         |
+| ON             | None                         | ON                                   | ON                         | 通信できない状態から復帰した場合                                                     |
+| OFF            | Launched                     | Stopping                             | Stopping                   | 停止処理開始                                                                         |
+| OFF            | Launched                     | None                                 | Lost / SyncedOFF (OFF)     | エージェントとの通信途絶 or サーバーの電源が手動で OFF → 5 分経過で SyncedOFF へ移行 |
+| OFF            | ON                           | Stopping                             | Stopping                   | 停止処理開始                                                                         |
+| OFF            | ON                           | None                                 | Lost / SyncedOFF (OFF)     | エージェントとの通信途絶 or サーバーの電源が手動で OFF → 5 分経過で SyncedOFF へ移行 |
+| OFF            | Stopping                     | Stopping                             | Stopping                   | シャットダウン中                                                                     |
+| OFF            | Stopping                     | None                                 | OFF                        | 正常に電源が落ちた                                                                   |
+| OFF            | None                         | Launched                             | SyncedON (ON)              | 電源ステータスを自動的に ON に変更                                                   |
+| OFF            | None                         | Stopping                             | Stopping                   | 通信できない状態から復帰した場合                                                     |
 
 ### 異常系
 
 | 電源ステータス | 前回のハートビートステータス | 現在受け取ったハートビートステータス | カレントステータス | 状況                                                                                                                                            |
-| -------------- | ---------------------------- | ------------------------------------ | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| -------------- | ---------------------------- | ------------------------------------ | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | ON             | Launched                     | Launched                             | Error              | 2 回連続で Launched が報告されるのは正常の挙動ではない                                                                                          |
 | ON             | Launched                     | Stopping                             | Error              | Stopping は電源ステータスが OFF のときのみ報告できる                                                                                            |
 | ON             | ON                           | Launched                             | Error              | ON の最中に Launched が報告されるのは正常の挙動ではない                                                                                         |
@@ -161,7 +162,7 @@
 | OFF            | Stopping                     | Launched                             | Error              | Stopping の最中に Launched が報告されるのは正常の挙動ではない                                                                                   |
 | OFF            | Stopping                     | ON                                   | Error              | 電源ステータスが OFF のときにハートビートステータスが ON になることはない                                                                       |
 | OFF            | None                         | ON                                   | Error              | 電源ステータスが OFF のときにハートビートステータスが ON になることはない                                                                       |
-| OFF            | None                         | None                                 | Error              | None が連続して報告されることはない                                                                                                             |     |
+| OFF            | None                         | None                                 | Error              | None が連続して報告されることはない                                                                                                             |
 
 ## 各画面やコンポーネントと機能
 
