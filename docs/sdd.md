@@ -269,15 +269,17 @@ graph RL
   - すでに設定ファイルが存在する場合、エラーメッセージを表示して終了する
   - バリデーションに失敗した場合、エラーメッセージを表示して終了する
 
-#### `komo-agent set [target]`
+#### `komo-agent set [target] [value]`
 
 - 概要
   - エージェントの設定を変更する
 - args/option
-  - target: 設定を変更する対象（manager_url または access_token）
+  - target: 設定を変更する対象（managerUrl, accessToken, logGeneration, disabledFileLog）
+  - value: 設定する値
+    - ただし accessToken の場合は機密情報のため対話形式で入力させる
 - 処理内容
-  - 指定された値を対話形式で入力する
-    - バリデーション等は `komo-agent init` と同様
+  - （accessToken の場合のみ）指定された値を対話形式で入力する
+  - 与えられた値の検証
   - 入力された値で対象の設定を上書きする
 - 例外
   - Config が存在しない場合、エラーメッセージを表示して終了する
@@ -370,9 +372,11 @@ Config は `/etc/komoriuta/config.json` に JSON 形式で保存される
 
 ```ts
 interface AgentConfig {
-  enabled: boolean;
+  enabled: boolean; // default: false
   managerURL: string;
   accessToken: string;
+  logGeneration: number; // default: 7
+  disabledFileLog: boolean; // default: false
 }
 ```
 
