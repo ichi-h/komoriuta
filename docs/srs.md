@@ -116,7 +116,7 @@
       - 補足
         - Error になった場合はユーザーにその旨を通知
   - 優先度
-    - （検討中）
+    - ON/OFF < SyncedON/SyncedOFF < Starting/Stopping < Applying < Lost < Error
 
 ## 各ステータスの関係性
 
