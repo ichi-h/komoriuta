@@ -48,7 +48,6 @@ erDiagram
     TEXT uuid
     TEXT name
     TEXT mac_address
-    TEXT access_token_hash "scrypt でハッシュ化"
     INTEGER power_status "0: OFF, 1: ON"
     INTEGER heartbeat_status "0: None, 1: Launched, 2: ON, 3: Stopping"
     INTEGER previous_heartbeat_status "0: None, 1: Launched, 2: ON, 3: Stopping"
@@ -58,6 +57,16 @@ erDiagram
     DATETIME created_at
     DATETIME updated_at
   }
+
+  access_tokens {
+    INTEGER id PK
+    INTEGER server_id FK
+    TEXT token_hash "scrypt でハッシュ化"
+    DATETIME created_at
+    DATETIME updated_at
+  }
+
+  servers ||--|| access_tokens: "has one"
 ```
 
 ## Manager
