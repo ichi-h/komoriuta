@@ -2,8 +2,10 @@
   "servers": {
     "serena": {
       "type": "stdio",
-      "args": ["start-mcp-server"],
-      "command": "/nix/store/hzjfakw4ilalm7ydw9g6qmg074v91ivn-serena-0.1.4-unstable-2025-10-15/bin/serena",
+      "args": [
+        "start-mcp-server"
+      ],
+      "command": "/nix/store/vgd2ii4cd4vbq8z61q23im0b0hzlniw2-serena-0.1.4-unstable-2025-11-06/bin/serena",
       "env": {}
     }
   },
