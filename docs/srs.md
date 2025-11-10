@@ -105,6 +105,15 @@
         - 何らかの理由でエージェントと通信ができなくなった場合を想定している
         - サーバーの電源が手動で OFF になった場合も含む
         - 通信が途絶した旨をユーザーに通知する
+    - Warning
+      - 意味: 注意が必要な状態であるとき
+      - 条件:
+        - 2 連続で Launched が報告された場合
+          - 連続でマネージャーが再起動を繰り返している
+        - 電源ステータスが OFF、かつ前回のハートビートステータスが ON または Stopping、かつ現在のハートビートステータスが Launched
+          - 電源停止中にマネージャーが再起動している
+      - 補足
+        - Warning になった場合はユーザーにその旨を通知
     - Error
       - 意味: 想定しない状況であるとき
       - 条件: 上記以外
@@ -120,17 +129,22 @@
 | 電源ステータス | 前回のハートビートステータス | 現在受け取ったハートビートステータス | カレントステータス         | 状況                                                                                 |
 | -------------- | ---------------------------- | ------------------------------------ | -------------------------- | ------------------------------------------------------------------------------------ |
 | ON/OFF         | -                            | -                                    | Applying                   | 電源ステータスの変更を適用中                                                         |
+| ON             | Launched                     | Launched                             | Warning                    | マネージャーが再起動を繰り返している                                                 |
 | ON             | Launched                     | ON                                   | ON                         | 正常稼働                                                                             |
 | ON             | Launched                     | None                                 | Lost / SyncedOFF (OFF)     | エージェントとの通信途絶 or サーバーの電源が手動で OFF → 5 分経過で SyncedOFF へ移行 |
+| ON             | ON                           | Launched                             | ON                         | マネージャーが再起動した                                                             |
 | ON             | ON                           | ON                                   | ON                         | 正常稼働                                                                             |
 | ON             | ON                           | None                                 | Lost / SyncedOFF (OFF)     | エージェントとの通信途絶 or サーバーの電源が手動で OFF → 5 分経過で SyncedOFF へ移行 |
 | ON             | Stopping                     | None                                 | Starting / SyncedOFF (OFF) | 電源起動中 → 5 分経過で SyncedOFF へ移行                                             |
 | ON             | None                         | Launched                             | ON                         | 電源が入った                                                                         |
 | ON             | None                         | ON                                   | ON                         | 通信できない状態から復帰した場合                                                     |
+| OFF            | Launched                     | Launched                             | Warning                    | マネージャーが再起動を繰り返している                                                 |
 | OFF            | Launched                     | Stopping                             | Stopping                   | 停止処理開始                                                                         |
 | OFF            | Launched                     | None                                 | Lost / SyncedOFF (OFF)     | エージェントとの通信途絶 or サーバーの電源が手動で OFF → 5 分経過で SyncedOFF へ移行 |
+| OFF            | ON                           | Launched                             | Warning                    | 電源停止中にマネージャーが再起動している                                             |
 | OFF            | ON                           | Stopping                             | Stopping                   | 停止処理開始                                                                         |
 | OFF            | ON                           | None                                 | Lost / SyncedOFF (OFF)     | エージェントとの通信途絶 or サーバーの電源が手動で OFF → 5 分経過で SyncedOFF へ移行 |
+| OFF            | Stopping                     | Launched                             | Warning                    | 電源停止中にマネージャーが再起動している                                             |
 | OFF            | Stopping                     | Stopping                             | Stopping                   | シャットダウン中                                                                     |
 | OFF            | Stopping                     | None                                 | OFF                        | 正常に電源が落ちた                                                                   |
 | OFF            | None                         | Launched                             | SyncedON (ON)              | 電源ステータスを自動的に ON に変更                                                   |
@@ -138,25 +152,20 @@
 
 ### 異常系
 
-| 電源ステータス | 前回のハートビートステータス | 現在受け取ったハートビートステータス | カレントステータス | 状況                                                                                                                                            |
-| -------------- | ---------------------------- | ------------------------------------ | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| ON             | Launched                     | Launched                             | Error              | 2 回連続で Launched が報告されるのは正常の挙動ではない                                                                                          |
-| ON             | Launched                     | Stopping                             | Error              | Stopping は電源ステータスが OFF のときのみ報告できる                                                                                            |
-| ON             | ON                           | Launched                             | Error              | ON の最中に Launched が報告されるのは正常の挙動ではない                                                                                         |
-| ON             | ON                           | Stopping                             | Error              | Stopping は電源ステータスが OFF のとき                                                                                                          |
-| ON             | Stopping                     | Launched                             | Error              | Stopping は電源ステータスが OFF のときのみ、かつ Stopping 中は電源が落ちるまで電源ステータスを変更できないので、None 以外が来ることはありえない |
-| ON             | Stopping                     | ON                                   | Error              | 〃                                                                                                                                              |
-| ON             | Stopping                     | Stopping                             | Error              | 〃                                                                                                                                              |
-| ON             | None                         | Stopping                             | Error              | Stopping は電源ステータスが OFF のときのみ                                                                                                      |
-| ON             | None                         | None                                 | Error              | None が連続して報告されることはない                                                                                                             |
-| OFF            | Launched                     | Launched                             | Error              | 2 回連続で Launched が報告されるのは正常の挙動ではない                                                                                          |
-| OFF            | Launched                     | ON                                   | Error              | 電源ステータスが OFF のときにハートビートステータスが ON になることはない                                                                       |
-| OFF            | ON                           | Launched                             | Error              | ON の最中に Launched が報告されるのは正常の挙動ではない                                                                                         |
-| OFF            | ON                           | ON                                   | Error              | 電源ステータスが OFF のときにハートビートステータスが ON になることはない                                                                       |
-| OFF            | Stopping                     | Launched                             | Error              | Stopping の最中に Launched が報告されるのは正常の挙動ではない                                                                                   |
-| OFF            | Stopping                     | ON                                   | Error              | 電源ステータスが OFF のときにハートビートステータスが ON になることはない                                                                       |
-| OFF            | None                         | ON                                   | Error              | 電源ステータスが OFF のときにハートビートステータスが ON になることはない                                                                       |
-| OFF            | None                         | None                                 | Error              | None が連続して報告されることはない                                                                                                             |
+| 電源ステータス | 前回のハートビートステータス | 現在受け取ったハートビートステータス | カレントステータス | 状況                                                                                                                                                                                                                     |
+| -------------- | ---------------------------- | ------------------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ON             | Launched                     | Stopping                             | Error              | Stopping は電源ステータスが OFF のときのみ報告できる                                                                                                                                                                     |
+| ON             | ON                           | Stopping                             | Error              | 〃                                                                                                                                                                                                                       |
+| ON             | Stopping                     | Launched                             | Error              | Stopping は電源ステータスが OFF のときのみ、かつ Stopping 中は電源が落ちるまで電源ステータスを変更できないので、電源ステータスが ON かつ前回のハートビートステータスが Stopping のときに None 以外が報告されることはない |
+| ON             | Stopping                     | ON                                   | Error              | 〃                                                                                                                                                                                                                       |
+| ON             | Stopping                     | Stopping                             | Error              | 〃                                                                                                                                                                                                                       |
+| ON             | None                         | Stopping                             | Error              | Stopping は電源ステータスが OFF のときのみ                                                                                                                                                                               |
+| ON             | None                         | None                                 | Error              | None が連続して報告されることはない                                                                                                                                                                                      |
+| OFF            | Launched                     | ON                                   | Error              | 電源ステータスが OFF のときにハートビートステータスが ON になることはない                                                                                                                                                |
+| OFF            | ON                           | ON                                   | Error              | 〃                                                                                                                                                                                                                       |
+| OFF            | Stopping                     | ON                                   | Error              | 〃                                                                                                                                                                                                                       |
+| OFF            | None                         | ON                                   | Error              | 〃                                                                                                                                                                                                                       |
+| OFF            | None                         | None                                 | Error              | None が連続して報告されることはない                                                                                                                                                                                      |
 
 ## 各画面やコンポーネントと機能
 
