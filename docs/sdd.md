@@ -135,7 +135,7 @@ graph RL
 ### API
 
 - Protocol: http/https
-- Schema: Connect
+- Schema: Protobuf + Connect
 
 see: [./proto/](/proto/)
 
