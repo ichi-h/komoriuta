@@ -1,0 +1,9 @@
+# Generated code
+gen/
+
+# Buf lock file
+buf.lock
+
+# Nix
+result
+.direnv

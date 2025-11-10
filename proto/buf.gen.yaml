@@ -1,0 +1,32 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/ichi-h/komoriuta/proto/gen
+plugins:
+  # Go protobuf plugin
+  - remote: buf.build/protocolbuffers/go
+    out: gen/go
+    opt:
+      - paths=source_relative
+
+  # Go Connect plugin
+  - remote: buf.build/connectrpc/go
+    out: gen/go
+    opt:
+      - paths=source_relative
+
+  # TypeScript Connect plugin (for Bun/Node.js)
+  - remote: buf.build/connectrpc/es
+    out: gen/ts
+    opt:
+      - target=ts
+      - import_extension=none
+
+  # TypeScript type definitions
+  - remote: buf.build/bufbuild/es
+    out: gen/ts
+    opt:
+      - target=ts
+      - import_extension=none
