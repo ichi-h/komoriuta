@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package komoriuta.v1;
+
+import "komoriuta/v1/server.proto";
+
+option go_package = "github.com/ichi-h/komoriuta/proto/gen/go/komoriuta/v1;komoriutav1";
+
+// AgentService provides agent communication endpoints
+// Authentication: Bearer Token required
+// Routing: These endpoints must be isolated (e.g., /agent/*)
+service AgentService {
+  // GetManifest retrieves the manifest for the agent
+  rpc GetManifest(GetManifestRequest) returns (GetManifestResponse);
+
+  // SendHeartbeat sends a heartbeat from the agent to manager
+  rpc SendHeartbeat(SendHeartbeatRequest) returns (SendHeartbeatResponse);
+}
+
+message GetManifestRequest {
+  // Request is authenticated via Bearer token in Authorization header
+  // The token identifies which server this request is for
+}
+
+message GetManifestResponse {
+  // Desired power status for the server
+  PowerStatus power_status = 1;
+
+  // Heartbeat interval in seconds
+  int32 heartbeat_interval = 2;
+}
+
+message SendHeartbeatRequest {
+  // Current heartbeat status of the agent
+  HeartbeatStatus heartbeat_status = 1;
+
+  // Request is authenticated via Bearer token in Authorization header
+  // The token identifies which server this heartbeat is from
+}
+
+message SendHeartbeatResponse {
+  // Whether the heartbeat was received successfully
+  bool success = 1;
+
+  // Optional message from manager
+  optional string message = 2;
+}

@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package komoriuta.v1;
+
+option go_package = "github.com/ichi-h/komoriuta/proto/gen/go/komoriuta/v1;komoriutav1";
+
+// ErrorCode represents common error codes across all services
+enum ErrorCode {
+  ERROR_CODE_UNSPECIFIED = 0;
+
+  // Authentication errors (1000-1099)
+  ERROR_CODE_UNAUTHENTICATED = 1000;
+  ERROR_CODE_UNAUTHORIZED = 1001;
+  ERROR_CODE_SESSION_EXPIRED = 1002;
+  ERROR_CODE_INVALID_CREDENTIALS = 1003;
+  ERROR_CODE_ACCOUNT_LOCKED = 1004;
+
+  // Validation errors (1100-1199)
+  ERROR_CODE_INVALID_REQUEST = 1100;
+  ERROR_CODE_MISSING_FIELD = 1101;
+  ERROR_CODE_INVALID_FORMAT = 1102;
+  ERROR_CODE_OUT_OF_RANGE = 1103;
+
+  // Resource errors (1200-1299)
+  ERROR_CODE_NOT_FOUND = 1200;
+  ERROR_CODE_ALREADY_EXISTS = 1201;
+  ERROR_CODE_CONFLICT = 1202;
+
+  // Server errors (1300-1399)
+  ERROR_CODE_INTERNAL_ERROR = 1300;
+  ERROR_CODE_SERVICE_UNAVAILABLE = 1301;
+  ERROR_CODE_DATABASE_ERROR = 1302;
+
+  // Agent errors (1400-1499)
+  ERROR_CODE_AGENT_UNREACHABLE = 1400;
+  ERROR_CODE_AGENT_TIMEOUT = 1401;
+  ERROR_CODE_INVALID_TOKEN = 1402;
+
+  // Power operation errors (1500-1599)
+  ERROR_CODE_POWER_OPERATION_FAILED = 1500;
+  ERROR_CODE_POWER_STATE_LOCKED = 1501;
+  ERROR_CODE_WOL_FAILED = 1502;
+}
+
+// Error provides detailed error information
+message Error {
+  // Error code
+  ErrorCode code = 1;
+
+  // Human-readable error message
+  string message = 2;
+
+  // Optional field that caused the error
+  optional string field = 3;
+
+  // Optional additional details
+  map<string, string> details = 4;
+}

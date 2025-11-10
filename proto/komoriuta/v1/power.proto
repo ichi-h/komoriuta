@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package komoriuta.v1;
+
+option go_package = "github.com/ichi-h/komoriuta/proto/gen/go/komoriuta/v1;komoriutav1";
+
+// PowerService provides server power control endpoints
+// Authentication: Cookie required
+service PowerService {
+  // TurnOn starts a server using Wake-on-LAN
+  rpc TurnOn(TurnOnRequest) returns (TurnOnResponse);
+
+  // TurnOff shuts down a server via agent
+  rpc TurnOff(TurnOffRequest) returns (TurnOffResponse);
+}
+
+message TurnOnRequest {
+  // Server ID to power on
+  int64 server_id = 1;
+}
+
+message TurnOnResponse {
+  // Whether the power on request was initiated successfully
+  bool success = 1;
+
+  // Error message if failed
+  optional string error_message = 2;
+}
+
+message TurnOffRequest {
+  // Server ID to power off
+  int64 server_id = 1;
+}
+
+message TurnOffResponse {
+  // Whether the power off request was initiated successfully
+  bool success = 1;
+
+  // Error message if failed
+  optional string error_message = 2;
+}

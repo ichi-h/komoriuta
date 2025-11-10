@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package komoriuta.v1;
+
+option go_package = "github.com/ichi-h/komoriuta/proto/gen/go/komoriuta/v1;komoriutav1";
+
+// AccessTokenService provides access token management endpoints
+// Authentication: Cookie required
+service AccessTokenService {
+  // RotateToken generates a new access token and invalidates the old one
+  rpc RotateToken(RotateTokenRequest) returns (RotateTokenResponse);
+}
+
+message RotateTokenRequest {
+  // Server ID to rotate token for
+  int64 server_id = 1;
+}
+
+message RotateTokenResponse {
+  // New access token (shown only once)
+  string access_token = 1;
+
+  // Whether the rotation was successful
+  bool success = 2;
+
+  // Error message if failed
+  optional string error_message = 3;
+}

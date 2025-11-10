@@ -1,0 +1,194 @@
+syntax = "proto3";
+
+package komoriuta.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/ichi-h/komoriuta/proto/gen/go/komoriuta/v1;komoriutav1";
+
+// ServerService provides server management endpoints
+// Authentication: Cookie required
+service ServerService {
+  // ListServers returns all managed servers
+  rpc ListServers(ListServersRequest) returns (ListServersResponse);
+
+  // GetServer returns detailed information about a specific server
+  rpc GetServer(GetServerRequest) returns (GetServerResponse);
+
+  // CreateServer adds a new server to management
+  rpc CreateServer(CreateServerRequest) returns (CreateServerResponse);
+
+  // UpdateServer modifies an existing server's configuration
+  rpc UpdateServer(UpdateServerRequest) returns (UpdateServerResponse);
+
+  // DeleteServer removes a server from management
+  rpc DeleteServer(DeleteServerRequest) returns (DeleteServerResponse);
+
+  // WatchServers streams real-time server status updates (optional)
+  rpc WatchServers(WatchServersRequest) returns (stream WatchServersResponse);
+}
+
+// PowerStatus represents the desired power state
+enum PowerStatus {
+  POWER_STATUS_UNSPECIFIED = 0;
+  POWER_STATUS_OFF = 1;
+  POWER_STATUS_ON = 2;
+}
+
+// HeartbeatStatus represents the agent's reported status
+enum HeartbeatStatus {
+  HEARTBEAT_STATUS_UNSPECIFIED = 0;
+  HEARTBEAT_STATUS_NONE = 1; // No heartbeat received
+  HEARTBEAT_STATUS_LAUNCHED = 2; // Agent just started
+  HEARTBEAT_STATUS_ON = 3; // Agent running normally
+  HEARTBEAT_STATUS_STOPPING = 4; // Agent shutting down
+}
+
+// CurrentStatus represents the computed current state
+enum CurrentStatus {
+  CURRENT_STATUS_UNSPECIFIED = 0;
+  CURRENT_STATUS_APPLYING = 1; // Applying power status change
+  CURRENT_STATUS_ON = 2; // Server is running
+  CURRENT_STATUS_OFF = 3; // Server is stopped
+  CURRENT_STATUS_STARTING = 4; // Server is starting up
+  CURRENT_STATUS_STOPPING = 5; // Server is shutting down
+  CURRENT_STATUS_SYNCED_ON = 6; // Auto-synced to ON
+  CURRENT_STATUS_SYNCED_OFF = 7; // Auto-synced to OFF
+  CURRENT_STATUS_LOST = 8; // Lost connection
+  CURRENT_STATUS_WARNING = 9; // Requires attention
+  CURRENT_STATUS_ERROR = 10; // Unexpected state
+}
+
+// Server represents a managed server
+message Server {
+  // Server's database ID
+  int64 id = 1;
+
+  // Server's unique UUID
+  string uuid = 2;
+
+  // Server's display name
+  string name = 3;
+
+  // Server's MAC address for Wake-on-LAN
+  string mac_address = 4;
+
+  // Desired power status
+  PowerStatus power_status = 5;
+
+  // Current heartbeat status
+  HeartbeatStatus heartbeat_status = 6;
+
+  // Previous heartbeat status
+  HeartbeatStatus previous_heartbeat_status = 7;
+
+  // Heartbeat interval in seconds
+  int32 heartbeat_interval = 8;
+
+  // Computed current status
+  CurrentStatus current_status = 9;
+
+  // Last heartbeat timestamp
+  google.protobuf.Timestamp last_heartbeat_at = 10;
+
+  // Last power status change timestamp
+  google.protobuf.Timestamp last_power_changed_at = 11;
+
+  // Server creation timestamp
+  google.protobuf.Timestamp created_at = 12;
+
+  // Server last update timestamp
+  google.protobuf.Timestamp updated_at = 13;
+}
+
+// ServerSummary contains basic server information for list views
+message ServerSummary {
+  int64 id = 1;
+  string uuid = 2;
+  string name = 3;
+  PowerStatus power_status = 4;
+  CurrentStatus current_status = 5;
+}
+
+message ListServersRequest {}
+
+message ListServersResponse {
+  repeated ServerSummary servers = 1;
+}
+
+message GetServerRequest {
+  // Server ID to retrieve
+  int64 id = 1;
+}
+
+message GetServerResponse {
+  Server server = 1;
+}
+
+message CreateServerRequest {
+  // Server name (required, minimum 1 character)
+  string name = 1;
+
+  // MAC address (required, pattern: ^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$)
+  string mac_address = 2;
+
+  // Heartbeat interval in seconds (required, range: 5-60, default: 10)
+  int32 heartbeat_interval = 3;
+}
+
+message CreateServerResponse {
+  // Created server information
+  Server server = 1;
+
+  // Access token (shown only once)
+  string access_token = 2;
+}
+
+message UpdateServerRequest {
+  // Server ID to update
+  int64 id = 1;
+
+  // New server name (optional)
+  optional string name = 2;
+
+  // New MAC address (optional)
+  optional string mac_address = 3;
+
+  // New heartbeat interval (optional)
+  optional int32 heartbeat_interval = 4;
+}
+
+message UpdateServerResponse {
+  // Updated server information
+  Server server = 1;
+}
+
+message DeleteServerRequest {
+  // Server ID to delete
+  int64 id = 1;
+}
+
+message DeleteServerResponse {
+  // Whether the deletion was successful
+  bool success = 1;
+}
+
+message WatchServersRequest {}
+
+message WatchServersResponse {
+  // Type of update
+  enum UpdateType {
+    UPDATE_TYPE_UNSPECIFIED = 0;
+    UPDATE_TYPE_STATUS_CHANGED = 1; // Server status changed
+    UPDATE_TYPE_ERROR = 2; // Error occurred
+    UPDATE_TYPE_WARNING = 3; // Warning occurred
+  }
+
+  UpdateType type = 1;
+
+  // Updated server information
+  optional ServerSummary server = 2;
+
+  // Error or warning message
+  optional string message = 3;
+}

@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package komoriuta.v1;
+
+option go_package = "github.com/ichi-h/komoriuta/proto/gen/go/komoriuta/v1;komoriutav1";
+
+// AuthService provides user authentication endpoints
+// Authentication: None required for Login, Cookie required for others
+service AuthService {
+  // Login authenticates a user with ID and password
+  rpc Login(LoginRequest) returns (LoginResponse);
+
+  // Logout invalidates the current user session
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+
+  // Verify checks if the current session is valid
+  rpc Verify(VerifyRequest) returns (VerifyResponse);
+}
+
+message LoginRequest {
+  // User ID for authentication
+  string user_id = 1;
+
+  // User password for authentication
+  string password = 2;
+}
+
+message LoginResponse {
+  // Whether the login was successful
+  bool success = 1;
+
+  // Error message if login failed
+  optional string error_message = 2;
+
+  // Number of failed login attempts (for rate limiting)
+  optional int32 failed_attempts = 3;
+}
+
+message LogoutRequest {}
+
+message LogoutResponse {
+  // Whether the logout was successful
+  bool success = 1;
+}
+
+message VerifyRequest {}
+
+message VerifyResponse {
+  // Whether the session is valid
+  bool authenticated = 1;
+
+  // User ID if authenticated
+  optional string user_id = 2;
+}
