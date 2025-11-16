@@ -16,6 +16,9 @@
       {
         devShells = {
           default = packages.mkShell {
+            buildInputs = with packages; [
+              lefthook
+            ];
             shellHook = let
               config = mcp-servers-nix.lib.mkConfig packages {
                 programs = {
@@ -27,6 +30,8 @@
                 unlink .mcp.json
               fi
               ln -sf ${config} .mcp.json
+
+              lefthook check-install || lefthook install
             '';
           };
         };

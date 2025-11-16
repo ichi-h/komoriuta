@@ -1,0 +1,25 @@
+pre-commit:
+  parallel: true
+  commands:
+    bun-lint:
+      glob: "*.{ts,js,tsx,jsx,css,html,json,yml,yaml}"
+      root: "./bun"
+      stage_fixed: true
+      run: bun run lint
+    bun-format:
+      glob: "*.{ts,js,tsx,jsx,css,html,json,yml,yaml}"
+      root: "./bun"
+      stage_fixed: true
+      run: bun run format
+
+pre-push:
+  parallel: true
+  commands:
+    bun-test:
+      glob: "*.{ts,js,tsx,jsx,css,html}"
+      root: "./bun"
+      run: bun test
+    bun-build:
+      glob: "*.{ts,js,tsx,jsx,css,html}"
+      root: "./bun"
+      run: bun run build:dev
