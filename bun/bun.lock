@@ -3,6 +3,17 @@
   "workspaces": {
     "": {
       "name": "komo-manager",
+      "devDependencies": {
+        "@tsconfig/bun": "^1.0.9",
+        "@tsconfig/strictest": "^2.0.6",
+        "@types/bun": "latest",
+      },
+      "peerDependencies": {
+        "typescript": "^5",
+      },
+    },
+    "packages/app": {
+      "name": "@komo-manager/app",
       "dependencies": {
         "@elysiajs/static": "^1.4.6",
         "elysia": "latest",
@@ -10,14 +21,8 @@
         "react-dom": "^19.2.0",
       },
       "devDependencies": {
-        "@tsconfig/bun": "^1.0.9",
-        "@tsconfig/strictest": "^2.0.6",
-        "@types/bun": "latest",
         "@types/react": "^19.2.5",
         "@types/react-dom": "^19.2.3",
-      },
-      "peerDependencies": {
-        "typescript": "^5",
       },
     },
   },
@@ -25,6 +30,8 @@
     "@borewit/text-codec": ["@borewit/text-codec@0.1.1", "", {}, "sha512-5L/uBxmjaCIX5h8Z+uu+kA9BQLkc/Wl06UGR5ajNRxu+/XjonB5i8JpgFMrPj3LXTCPA0pv8yxUvbUi+QthGGA=="],
 
     "@elysiajs/static": ["@elysiajs/static@1.4.6", "", { "peerDependencies": { "elysia": ">= 1.4.0" } }, "sha512-cd61aY/DHOVhlnBjzTBX8E1XANIrsCH8MwEGHeLMaZzNrz0gD4Q8Qsde2dFMzu81I7ZDaaZ2Rim9blSLtUrYBg=="],
+
+    "@komo-manager/app": ["@komo-manager/app@workspace:packages/app"],
 
     "@sinclair/typebox": ["@sinclair/typebox@0.34.41", "", {}, "sha512-6gS8pZzSXdyRHTIqoqSVknxolr1kzfy4/CeDnrzsVz8TTIWUbOBr6gnzOmTYJ3eXQNh4IYHIGi5aIL7sOZ2G/g=="],
 

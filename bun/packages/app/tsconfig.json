@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "src/*": [
+        "./src/*"
+      ],
+      "public/*": [
+        "./public/*"
+      ]
+    }
+  },
+  "extends": [
+    "../../tsconfig.json"
+  ],
+  "include": [
+    "**/*"
+  ],
+  "exclude": [
+    "dist"
+  ]
+}

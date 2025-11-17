@@ -1,0 +1,20 @@
+{
+  "name": "@komo-manager/app",
+  "type": "module",
+  "private": true,
+  "module": "src/index.js",
+  "scripts": {
+    "dev": "bun --hot src/index.ts",
+    "build": "bun build --compile --target bun --outfile komo-manager src/index.ts"
+  },
+  "dependencies": {
+    "@elysiajs/static": "^1.4.6",
+    "elysia": "latest",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3"
+  }
+}
