@@ -17,16 +17,16 @@ plugins:
     opt:
       - paths=source_relative
 
-  # TypeScript Connect plugin (for Bun/Node.js)
-  - remote: buf.build/connectrpc/es
-    out: gen/ts
+  # TypeScript protobuf plugin
+  - remote: buf.build/bufbuild/es
+    out: ../bun/packages/connect
     opt:
       - target=ts
       - import_extension=none
 
-  # TypeScript type definitions
-  - remote: buf.build/bufbuild/es
-    out: gen/ts
+  # TypeScript Connect plugin
+  - remote: buf.build/connectrpc/es
+    out: ../bun/packages/connect
     opt:
       - target=ts
       - import_extension=none

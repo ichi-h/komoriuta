@@ -1,0 +1,14 @@
+{
+  "name": "@komo-manager/connect",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "tsc": "tsc --noEmit"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.10.1"
+  }
+}
