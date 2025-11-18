@@ -18,6 +18,7 @@
           default = packages.mkShell {
             buildInputs = with packages; [
               lefthook
+              gh
             ];
             shellHook = let
               config = mcp-servers-nix.lib.mkConfig packages {
