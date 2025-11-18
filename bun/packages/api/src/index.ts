@@ -56,7 +56,7 @@ server.get('/api/get', (_, reply) => {
 });
 
 // サーバー起動
-const PORT = 3000;
+const PORT = parseInt(process.env.PORT || '8080', 10);
 await server.listen({ host: 'localhost', port: PORT });
 
 console.log(`🦊 Fastify server is running at http://localhost:${PORT}`);

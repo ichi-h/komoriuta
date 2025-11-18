@@ -15,8 +15,8 @@
         "typescript": "^5",
       },
     },
-    "packages/app": {
-      "name": "@komo-manager/app",
+    "packages/api": {
+      "name": "@komo-manager/api",
       "dependencies": {
         "@connectrpc/connect": "^2.1.1",
         "@connectrpc/connect-fastify": "^2.1.1",
@@ -24,6 +24,17 @@
         "@connectrpc/connect-web": "^2.1.1",
         "@komo-manager/connect": "workspace:*",
         "fastify": "^5.6.2",
+      },
+    },
+    "packages/connect": {
+      "name": "@komo-manager/connect",
+    },
+    "packages/web": {
+      "name": "@komo-manager/web",
+      "dependencies": {
+        "@connectrpc/connect": "^2.1.1",
+        "@connectrpc/connect-web": "^2.1.1",
+        "@komo-manager/connect": "workspace:*",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
       },
@@ -31,9 +42,6 @@
         "@types/react": "^19.2.5",
         "@types/react-dom": "^19.2.3",
       },
-    },
-    "packages/connect": {
-      "name": "@komo-manager/connect",
     },
   },
   "packages": {
@@ -59,9 +67,11 @@
 
     "@fastify/proxy-addr": ["@fastify/proxy-addr@5.1.0", "", { "dependencies": { "@fastify/forwarded": "^3.0.0", "ipaddr.js": "^2.1.0" } }, "sha512-INS+6gh91cLUjB+PVHfu1UqcB76Sqtpyp7bnL+FYojhjygvOPA9ctiD/JDKsyD9Xgu4hUhCSJBPig/w7duNajw=="],
 
-    "@komo-manager/app": ["@komo-manager/app@workspace:packages/app"],
+    "@komo-manager/api": ["@komo-manager/api@workspace:packages/api"],
 
     "@komo-manager/connect": ["@komo-manager/connect@workspace:packages/connect"],
+
+    "@komo-manager/web": ["@komo-manager/web@workspace:packages/web"],
 
     "@pinojs/redact": ["@pinojs/redact@0.4.0", "", {}, "sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg=="],
 
