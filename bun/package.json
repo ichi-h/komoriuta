@@ -6,7 +6,9 @@
     "format": "biome format --write",
     "lint": "biome lint --write"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.10.1"
+  },
   "devDependencies": {
     "@tsconfig/bun": "^1.0.9",
     "@tsconfig/strictest": "^2.0.6",
