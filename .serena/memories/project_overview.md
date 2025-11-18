@@ -23,7 +23,7 @@ Komoriuta（子守唄）
 ### Manager
 - 言語: TypeScript (Bun)
 - プロキシ: Bun Serve
-- バックエンド: ElysiaJS
+- バックエンド: Fastify
 - フロントエンド: React + shadcn/ui
 - コンテナ: Podman
 - プロトコル: Connect (Protocol Buffers)

@@ -9,7 +9,7 @@
 │   └── OS
 └── Manager Server
     ├── Manager (komo-manager)
-    │   ├── Backend (ElysiaJS)
+    │   ├── Backend (Fastify)
     │   ├── Frontend (React)
     │   └── Proxy (Bun Serve)
     └── Database (SQLite)
@@ -33,7 +33,7 @@
 単一実行ファイルで動作
 
 #### Backend
-- ElysiaJS フレームワーク
+- Fastify フレームワーク
 - SQLite データベース接続
 - Connect API サーバー
 - ハートビート監視ロジック
@@ -62,6 +62,8 @@
 - `enable/disable`: 有効化/無効化
 - `status`: 状態確認
 - `reload`: 設定再読み込み
+- `help`: ヘルプ表示
+- `version`: バージョン表示
 
 #### komolet (Daemon)
 systemd等で管理されるバックグラウンドプロセス
@@ -104,7 +106,7 @@ Agent側から報告する現在の状態
 - Starting, Stopping
 - Applying
 - SyncedON, SyncedOFF
-- Lost, Error
+- Lost, Warning, Error
 
 詳細な状態遷移は `/docs/srs.md` を参照
 
@@ -124,7 +126,7 @@ Agent側から報告する現在の状態
 
 ### 認証・認可
 - ユーザー: ID/パスワード + セッションCookie
-- Agent: Bearer Token (Base64エンコード)
+- Agent: Bearer Token
 
 ### 通信
 - localhost以外: HTTPS強制

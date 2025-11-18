@@ -10,7 +10,9 @@
 - Bun (高速なJavaScriptランタイム)
 
 ### フレームワーク・ライブラリ
-- **ElysiaJS**: バックエンドフレームワーク
+- **Fastify**: バックエンドフレームワーク
+  - Bunで動作する軽量かつ高速なWebフレームワーク
+  - Connectを用いてprotobufからサーバーコードを生成可能
 - **React**: UIライブラリ
 - **shadcn/ui**: UIコンポーネントライブラリ
 - **Connect**: Protocol BuffersベースのgRPC-like通信
