@@ -3,17 +3,17 @@ managed:
   enabled: true
   override:
     - file_option: go_package_prefix
-      value: github.com/ichi-h/komoriuta/proto/gen
+      value: github.com/ichi-h/komoriuta/go/pkg
 plugins:
   # Go protobuf plugin
   - remote: buf.build/protocolbuffers/go
-    out: gen/go
+    out: ../go/pkg
     opt:
       - paths=source_relative
 
   # Go Connect plugin
   - remote: buf.build/connectrpc/go
-    out: gen/go
+    out: ../go/pkg
     opt:
       - paths=source_relative
 

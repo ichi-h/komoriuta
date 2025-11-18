@@ -20,10 +20,12 @@ const routes = (router: ConnectRouter) => {
       });
 
       // 仮実装: とりあえずリクエストを受け取って成功レスポンスを返す
-      return create(LoginResponseSchema, {
+      const response = create(LoginResponseSchema, {
         success: true,
         failedAttempts: 0,
       });
+      console.log('Login response:', response);
+      return response;
     },
 
     async logout() {
