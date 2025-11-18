@@ -106,13 +106,13 @@ graph RL
   - 単一バイナリをコンテナで実行可能
 - Proxy: Bun Serve
   - nginx 等を利用せずに bun 単体で http/https のプロキシが可能
-- Backend Framework: ElysiaJS
-  - JS 上最も高速なバックエンドフレームワーク
+- Backend Framework: Fastify
+  - Bun で動作する軽量かつ高速な Web フレームワーク
   - Connect を用いて protobuf からサーバーコードを生成可能
 - UI Library: React
   - 開発者の技術スタックとして React が最も馴染み深いこと
 - Design: shadcn/ui
-  - ある程度完成されたコンポーネントを活用しつつ、柔軟性や拡張性も確保できること
+  - ある程度完成されたコンポーネントを活用しつつ、柔軟性や拡張性も確保できる
 - Containerization: Podman
   - Docker 互換のコンテナランタイム
   - rootless コンテナのサポート
