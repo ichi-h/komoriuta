@@ -81,9 +81,8 @@ erDiagram
 ```mermaid
 graph RL
   subgraph "komo-manager"
-    Backend
-    Frontend
-    Proxy
+    API["API (Backend)"]
+    Web["Web (Frontend)"]
   end
 
   subgraph Server
@@ -92,10 +91,9 @@ graph RL
 
   User
 
-  User -- Access UI --> Proxy
-  Agent -- Request Heartbeat / Manifest --> Proxy
-  Proxy -- Forward Request --> Frontend
-  Proxy -- Forward API Request --> Backend
+  User -- Access UI --> Web
+  Web -- API Request --> API
+  Agent -- Request Heartbeat / Manifest ---> API
 ```
 
 ### Technology Stack
@@ -104,8 +102,6 @@ graph RL
   - バックエンドとフロントエンドの言語を統一し、開発効率の向上を図る
   - 高速な JS 実行環境
   - 単一バイナリをコンテナで実行可能
-- Proxy: Bun Serve
-  - nginx 等を利用せずに bun 単体で http/https のプロキシが可能
 - Backend Framework: Fastify
   - Bun で動作する軽量かつ高速な Web フレームワーク
   - Connect を用いて protobuf からサーバーコードを生成可能
