@@ -16,8 +16,8 @@ komo-manager は単一実行ファイルで動作し、以下の 3 つのコン�
 src/
 ├── index.ts              # エントリーポイント
 ├── proxy/                # Proxyサーバー
-│   ├── index.ts
-│   └── router.ts
+│   ├── index.ts          # サーバー起動とルーティング
+│   └── middleware.ts     # HTTPS強制ミドルウェア
 ├── backend/              # Backendサーバー
 │   ├── index.ts
 │   ├── server.ts
@@ -87,14 +87,23 @@ bun run dev
 
 ### ビルド
 
+#### 完全ビルド（実行ファイル生成）
+
 ```bash
 bun run build
 ```
+
+このコマンドは以下を実行します：
+
+1. TypeScript をコンパイル
+2. 単一実行ファイル `bin/komo-manager` を生成（フロントエンドアセット含む）
 
 ### 実行
 
 ```bash
 bun run start
+# または
+./bin/komo-manager
 ```
 
 ## 環境変数
@@ -170,6 +179,7 @@ console.log(env.API_URL); // string
 | -------------------------- | ------------------------------------------------ | ----------------------------- |
 | `PORT`                     | Proxy サーバーのポート                           | 3000                          |
 | `HOST`                     | Proxy サーバーのホスト                           | 0.0.0.0                       |
+| `FRONTEND_DEV_MODE`        | 開発モード（HMR 有効化、true/false）             | false                         |
 | `BACKEND_PORT`             | Backend サーバーのポート                         | 3001                          |
 | `BACKEND_HOST`             | Backend サーバーのホスト                         | 127.0.0.1                     |
 | `DB_PATH`                  | SQLite データベースのパス                        | ./data/komoriuta.db           |
@@ -210,7 +220,10 @@ console.log(env.API_URL); // string
 - パスワードとアクセストークンは scrypt でハッシュ化
 - セッションは HttpOnly、Secure、SameSite=Strict 設定
 - CORS 設定により同一オリジンのみ許可
-- localhost 以外は HTTPS 強制
+- **HTTPS 強制**:
+  - localhost/127.0.0.1/::1 以外からの HTTP アクセスは HTTPS へリダイレクト（301）
+  - `X-Forwarded-Proto` ヘッダーをチェック（リバースプロキシ経由を想定）
+  - TLS 終端は nginx/traefik 等の外部リバースプロキシに委譲
 - ログイン試行回数制限（5 回失敗で 10 分間ブロック）
 
 ## ログ

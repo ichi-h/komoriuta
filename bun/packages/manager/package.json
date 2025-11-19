@@ -5,9 +5,9 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "bun run src/index.ts",
+    "dev": "FRONTEND_DEV_MODE=true bun run src/index.ts",
     "build": "bun run tsc && bun build --compile --target bun --outfile bin/komo-manager src/index.ts",
-    "start": "./dist/komo-manager"
+    "start": "./bin/komo-manager"
   },
   "dependencies": {
     "@connectrpc/connect": "^1.4.0",

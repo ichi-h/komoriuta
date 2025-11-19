@@ -28,6 +28,13 @@ const backendEnvConfig = {
     required: false,
   }, // 90日
 
+  // フロントエンド設定
+  FRONTEND_DEV_MODE: {
+    default: 'false',
+    type: 'boolean' as const,
+    required: false,
+  },
+
   // データベース設定
   DB_PATH: {
     default: './data/komoriuta.db',

@@ -21,8 +21,8 @@ bun/packages/manager/
     ├── index.ts              # エントリーポイント
     │
     ├── proxy/                # プロキシ層
-    │   ├── index.ts          # プロキシサーバー起動
-    │   └── router.ts         # ルーティングロジック
+    │   ├── index.ts          # プロキシサーバー起動とルーティング
+    │   └── middleware.ts     # HTTPS強制ミドルウェア
     │
     ├── backend/              # バックエンド層
     │   ├── index.ts          # バックエンドサーバー起動
@@ -80,9 +80,26 @@ bun/packages/manager/
 
 ### Proxy 層 (`src/proxy/`)
 
-- リクエストのルーティング
-- Backend と Frontend への振り分け
-- HTTPS/HTTP 対応
+#### サーバー起動とルーティング (`index.ts`)
+
+- **Bun の routes 機能を活用**
+
+  - `routes` オプションで `index.html` を自動配信
+  - 開発モード（`FRONTEND_DEV_MODE=true`）でホットリロード（HMR）有効化
+  - すべての未マッチルートで SPA として `index.html` を返す
+
+- **API リクエストのプロキシ**
+  - `/api/` で始まるパス → Backend へプロキシ
+  - `/komoriuta.v1.` で始まるパス → Backend へプロキシ（Connect RPC）
+  - その他のパス → Bun が自動的に `index.html` や静的アセットを配信
+
+#### ミドルウェア (`middleware.ts`)
+
+- **HTTPS 強制（localhost 以外）**
+  - localhost/127.0.0.1/::1 からのアクセスは HTTP を許可
+  - それ以外の場合、HTTP アクセスを HTTPS へリダイレクト（301）
+  - リバースプロキシ経由を想定し、`X-Forwarded-Proto` ヘッダーもチェック
+  - TLS 終端は外部のリバースプロキシ（nginx/traefik 等）に委譲
 
 ### Backend 層 (`src/backend/`)
 
@@ -165,6 +182,13 @@ bun/packages/manager/
 - ファイル権限はドキュメント仕様に準拠（600）
 
 ## 今後の課題
+
+### Proxy
+
+- ✅ フロントエンドの静的ファイル配信の実装
+- ✅ HTTPS/HTTP 切り替えロジックの実装
+- 静的ファイルのキャッシュ制御の追加
+- gzip/brotli 圧縮の実装
 
 ### Backend
 
