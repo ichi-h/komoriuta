@@ -1,66 +1,43 @@
-import { create } from '@bufbuild/protobuf';
-import type { ConnectRouter } from '@connectrpc/connect';
-import { fastifyConnectPlugin } from '@connectrpc/connect-fastify';
-import {
-  AuthService,
-  type LoginRequest,
-  LoginResponseSchema,
-  LogoutResponseSchema,
-  VerifyResponseSchema,
-} from '@komo-manager/connect/komoriuta/v1/auth_pb';
-import { fastify } from 'fastify';
+/**
+ * Backendサーバー起動
+ */
 
-// ConnectRPCルーターの作成
-const routes = (router: ConnectRouter) => {
-  router.service(AuthService, {
-    async login(req: LoginRequest) {
-      console.log('Login request received:', {
-        userId: req.userId,
-        password: '***',
-      });
+import { createServer } from './server';
+import { startHeartbeatMonitoring } from './services/heartbeat';
+import { getEnv } from './utils/env';
+import { logger } from './utils/logger';
 
-      // 仮実装: とりあえずリクエストを受け取って成功レスポンスを返す
-      const response = create(LoginResponseSchema, {
-        success: true,
-        failedAttempts: 0,
-      });
-      console.log('Login response:', response);
-      return response;
-    },
+const { API_PORT, API_HOST } = getEnv();
 
-    async logout() {
-      console.log('Logout request received');
-      return create(LogoutResponseSchema, {
-        success: true,
-      });
-    },
+export async function startBackend() {
+  const server = await createServer();
 
-    async verify() {
-      console.log('Verify request received');
-      return create(VerifyResponseSchema, {
-        authenticated: true,
-      });
-    },
+  // ハートビート監視を開始
+  startHeartbeatMonitoring();
+
+  await server.listen({
+    port: API_PORT,
+    host: API_HOST,
   });
-};
 
-// Fastifyサーバーを作成
-const server = fastify();
+  const url = `http://${API_HOST}:${API_PORT}`;
 
-// ConnectRPCプラグインを登録
-await server.register(fastifyConnectPlugin, {
-  routes,
-});
+  logger.info({
+    type: 'startup',
+    message: `Backend server started on ${url}`,
+  });
 
-// 通常のエンドポイント
-server.get('/api/get', (_, reply) => {
-  reply.type('text/plain').send('Hello, Bun with Fastify and ConnectRPC!');
-});
+  return { server, url };
+}
 
-// サーバー起動
-const PORT = parseInt(process.env.PORT || '8080', 10);
-await server.listen({ host: 'localhost', port: PORT });
-
-console.log(`🦊 Fastify server is running at http://localhost:${PORT}`);
-console.log(`📡 ConnectRPC endpoint: http://localhost:${PORT}`);
-console.log(`   Available services: komoriuta.v1.AuthService`);
+// エントリーポイント
+if (import.meta.main) {
+  startBackend().catch((error) => {
+    logger.error({
+      type: 'startup_error',
+      message: 'Failed to start backend server',
+      error: error instanceof Error ? error.message : String(error),
+    });
+    process.exit(1);
+  });
+}

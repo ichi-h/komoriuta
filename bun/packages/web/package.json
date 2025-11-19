@@ -1,21 +1,26 @@
 {
   "name": "@komo-manager/web",
+  "version": "0.1.0",
   "type": "module",
   "private": true,
-  "module": "src/index.js",
+  "module": "src/index.ts",
   "scripts": {
-    "dev": "bun --hot src/index.ts",
-    "build": "bun build --compile --target bun --outfile komo-manager-web src/index.ts"
+    "dev": "FRONTEND_DEV_MODE=true bun --hot src/index.ts",
+    "build": "bun run tsc && bun build --compile --target bun --outfile bin/komo-web src/index.ts",
+    "start": "./bin/komo-web"
   },
   "dependencies": {
     "@connectrpc/connect": "^2.1.1",
     "@connectrpc/connect-web": "^2.1.1",
     "@komo-manager/connect": "workspace:*",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^6.22.0"
   },
   "devDependencies": {
+    "@types/bun": "latest",
     "@types/react": "^19.2.5",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.3.3"
   }
 }

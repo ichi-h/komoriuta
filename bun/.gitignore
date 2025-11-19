@@ -2,3 +2,5 @@
 **/dist
 **/out
 **/build
+**/bin
+**/logs

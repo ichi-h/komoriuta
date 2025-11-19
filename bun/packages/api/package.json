@@ -1,19 +1,25 @@
 {
   "name": "@komo-manager/api",
+  "version": "0.1.0",
   "type": "module",
   "private": true,
-  "module": "src/index.js",
+  "module": "src/index.ts",
   "scripts": {
     "dev": "bun --hot src/index.ts",
-    "build": "bun build --compile --target bun --outfile komo-manager src/index.ts"
+    "build": "bun run tsc && bun build --compile --target bun --outfile bin/komo-api src/index.ts",
+    "start": "./bin/komo-api"
   },
   "dependencies": {
     "@connectrpc/connect": "^2.1.1",
     "@connectrpc/connect-fastify": "^2.1.1",
     "@connectrpc/connect-node": "^2.1.1",
-    "@connectrpc/connect-web": "^2.1.1",
+    "@fastify/cookie": "^10.0.1",
+    "@fastify/cors": "^11.1.0",
     "@komo-manager/connect": "workspace:*",
     "fastify": "^5.6.2"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.3.3"
+  }
 }

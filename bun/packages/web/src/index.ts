@@ -1,21 +1,70 @@
+/**
+ * Web Server (Frontend + Proxy)
+ * Bun Serve
+ * フロントエンド配信 + APIプロキシ
+ */
+
 import { serve } from 'bun';
-import index from './index.html';
+import indexHtml from './frontend/index.html';
+import { enforceHttps } from './middleware/middleware';
+import { getEnv } from './utils/env';
+import { logger } from './utils/logger';
 
-const server = serve({
+const { WEB_PORT, WEB_HOST, API_URL, FRONTEND_DEV_MODE } = getEnv();
+
+serve({
+  port: WEB_PORT,
+  hostname: WEB_HOST,
+
+  // ルーティング設定
   routes: {
-    // Serve index.html for all unmatched routes.
-    '/*': index,
+    // すべてのルートでindex.htmlを配信（SPAとして動作）
+    '/*': indexHtml,
   },
 
-  development: process.env.NODE_ENV !== 'production' && {
-    // Enable browser hot reloading in development
-    hmr: true,
-
-    // Echo console logs from the browser to the server
-    console: true,
+  // 開発モード設定
+  development: FRONTEND_DEV_MODE && {
+    hmr: true, // ホットリロード有効化
+    console: true, // ブラウザのコンソールログをサーバーに出力
   },
 
-  port: parseInt(process.env.PORT || '3000', 10),
+  // カスタムハンドラー（APIリクエストをバックエンドへプロキシ）
+  async fetch(request: Request) {
+    // HTTPS強制チェック（localhost以外）
+    const httpsRedirect = enforceHttps(request);
+    if (httpsRedirect) {
+      return httpsRedirect;
+    }
+
+    const url = new URL(request.url);
+
+    // APIリクエストの場合、Backendへプロキシ
+    if (
+      url.pathname.startsWith('/api/') ||
+      url.pathname.startsWith('/komoriuta.v1.')
+    ) {
+      const backendRequestUrl = new URL(url.pathname + url.search, API_URL);
+
+      return fetch(backendRequestUrl, {
+        method: request.method,
+        headers: request.headers,
+        body: request.body,
+      });
+    }
+
+    // その他のリクエストはデフォルトのルーティング（routes）に任せる
+    // Bunが自動的にindex.htmlやその他のアセットを配信
+    return new Response(null);
+  },
 });
 
-console.log(`🚀 Server running at ${server.url}`);
+logger.info({
+  type: 'startup',
+  message: `Web server started on http://${WEB_HOST}:${WEB_PORT}`,
+  context: {
+    apiUrl: API_URL,
+    devMode: FRONTEND_DEV_MODE,
+  },
+});
+
+console.log(`🚀 Web server running at http://${WEB_HOST}:${WEB_PORT}`);
