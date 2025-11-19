@@ -5,6 +5,7 @@ bun.lockb
 # Build output
 dist/
 *.log
+logs/
 
 # Database
 *.db

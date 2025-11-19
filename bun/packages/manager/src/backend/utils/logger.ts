@@ -61,7 +61,7 @@ type LogData =
   | Omit<GenericLog, 'level' | 'timestamp'>;
 
 const LOG_FILE_PATH =
-  process.env.LOG_FILE_PATH || '/var/log/komoriuta/komo-manager.log.jsonl';
+  process.env.LOG_FILE_PATH || './logs/komo-manager.log.jsonl';
 const DISABLE_FILE_LOG = process.env.DISABLE_FILE_LOG === 'true';
 
 class Logger {
