@@ -99,6 +99,73 @@ bun run start
 
 ## 環境変数
 
+### 環境変数ファイルの設定
+
+開発環境では、`.env.example`をコピーして`.env`ファイルを作成できます:
+
+```bash
+cp .env.example .env
+```
+
+`.env`ファイルを編集して、必要な環境変数を設定してください。
+
+**重要**: 本番環境では以下の環境変数を必ず設定してください:
+
+- `PASSWORD_HASH`: 管理者パスワードの scrypt ハッシュ
+- `COOKIE_SECRET`: Cookie 署名用のランダムな文字列
+
+#### パスワードハッシュの生成
+
+管理者パスワードのハッシュを生成するには、以下のスクリプトを使用します:
+
+```bash
+bun run scripts/hash-password.ts <password>
+```
+
+例:
+
+```bash
+bun run scripts/hash-password.ts mySecurePassword123
+```
+
+生成されたハッシュを`.env`ファイルの`PASSWORD_HASH`に設定してください。
+
+### 環境変数の管理
+
+環境変数はバックエンドとフロントエンドで分離して管理されています。
+
+#### バックエンド
+
+`src/backend/utils/env.ts` でバックエンド専用の環境変数を管理:
+
+```typescript
+import { getEnv } from "./backend/utils/env";
+
+// 環境変数を取得（型安全）
+const env = getEnv();
+console.log(env.PORT); // number
+console.log(env.DB_PATH); // string
+console.log(env.DISABLE_FILE_LOG); // boolean
+```
+
+本番環境では、`PASSWORD_HASH` と `COOKIE_SECRET` の設定が必須です。
+
+#### フロントエンド
+
+`src/frontend/utils/env.ts` でフロントエンド専用の環境変数を管理:
+
+```typescript
+import { getEnv } from "./frontend/utils/env";
+
+// 環境変数を取得（型安全）
+const env = getEnv();
+console.log(env.API_URL); // string
+```
+
+### 環境変数一覧
+
+#### バックエンド環境変数
+
 | 変数名                     | 説明                                             | デフォルト値                  |
 | -------------------------- | ------------------------------------------------ | ----------------------------- |
 | `PORT`                     | Proxy サーバーのポート                           | 3000                          |
@@ -115,6 +182,12 @@ bun run start
 | `LOG_FILE_PATH`            | ログファイル出力先パス（相対パスまたは絶対パス） | ./logs/komo-manager.log.jsonl |
 | `DISABLE_FILE_LOG`         | ファイルログを無効化（true/false）               | false                         |
 | `LOG_ROTATION_GENERATIONS` | ログローテーション世代数                         | 7                             |
+
+#### フロントエンド環境変数
+
+| 変数名    | 説明               | デフォルト値          |
+| --------- | ------------------ | --------------------- |
+| `API_URL` | Backend API の URL | http://localhost:3001 |
 
 ## 主要機能
 

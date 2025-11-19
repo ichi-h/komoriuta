@@ -6,7 +6,7 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "bun run src/index.ts",
-    "build": "bun run tsc && bun build --compile --target bun --outfile komo-manager src/index.ts",
+    "build": "bun run tsc && bun build --compile --target bun --outfile bin/komo-manager src/index.ts",
     "start": "./dist/komo-manager"
   },
   "dependencies": {

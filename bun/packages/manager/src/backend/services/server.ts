@@ -5,6 +5,7 @@
 import { getDatabase } from '../db';
 import type { PowerStatus, Server } from '../db/schema';
 import { generateAccessToken, hashPassword } from '../utils/crypto';
+import { getEnv } from '../utils/env';
 
 /**
  * サーバー一覧取得
@@ -49,13 +50,11 @@ export function createServer(data: {
   const serverId = result.lastInsertRowid as number;
 
   // アクセストークン作成
+  const { TOKEN_EXPIRES_SECONDS } = getEnv();
   const expiresAt =
-    process.env.TOKEN_EXPIRES_SECONDS === '0'
+    TOKEN_EXPIRES_SECONDS === 0
       ? null
-      : new Date(
-          Date.now() +
-            (Number(process.env.TOKEN_EXPIRES_SECONDS) || 7776000) * 1000,
-        ).toISOString();
+      : new Date(Date.now() + TOKEN_EXPIRES_SECONDS * 1000).toISOString();
 
   db.run(
     `INSERT INTO access_tokens (server_id, token_hash, expires_at)

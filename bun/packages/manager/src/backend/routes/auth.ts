@@ -9,10 +9,10 @@ import {
   recordLoginAttempt,
 } from '../middleware/auth';
 import { verifyPassword } from '../utils/crypto';
+import { getEnv } from '../utils/env';
 import { logger } from '../utils/logger';
 
-const USER_ID = process.env.USER_ID || 'admin';
-const PASSWORD_HASH = process.env.PASSWORD_HASH || '';
+const { USER_ID, PASSWORD_HASH, SESSION_MAX_AGE } = getEnv();
 
 export async function registerAuthRoutes(server: FastifyInstance) {
   // ログイン
@@ -62,7 +62,7 @@ export async function registerAuthRoutes(server: FastifyInstance) {
 
     reply.setCookie('session_id', sessionId, {
       path: '/',
-      maxAge: Number(process.env.SESSION_MAX_AGE) || 86400,
+      maxAge: SESSION_MAX_AGE,
       httpOnly: true,
       secure: true,
       sameSite: 'strict',

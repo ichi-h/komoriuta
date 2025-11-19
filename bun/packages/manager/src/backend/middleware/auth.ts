@@ -3,17 +3,18 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { getEnv } from '../utils/env';
 
-// セッション管理（インメモリ）
+// セッション管理(インメモリ)
 const sessions = new Map<string, { userId: string; expiresAt: number }>();
 
-// ログイン失敗管理（インメモリ）
+// ログイン失敗管理(インメモリ)
 const loginAttempts = new Map<
   string,
   { count: number; blockedUntil: number }
 >();
 
-const SESSION_MAX_AGE = Number(process.env.SESSION_MAX_AGE) || 86400; // 24時間
+const { SESSION_MAX_AGE } = getEnv();
 const MAX_LOGIN_ATTEMPTS = 5;
 const BLOCK_DURATION = 600000; // 10分（ミリ秒）
 

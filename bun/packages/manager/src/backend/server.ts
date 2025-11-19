@@ -9,8 +9,11 @@ import { initDatabase } from './db';
 import { errorHandler } from './middleware/error';
 import { registerAuthRoutes } from './routes/auth';
 import { registerConnectRoutes } from './routes/connect';
+import { getEnv } from './utils/env';
 
 export async function createServer(): Promise<FastifyInstance> {
+  const { ALLOWED_ORIGIN, COOKIE_SECRET } = getEnv();
+
   const server = Fastify({
     logger: false, // カスタムロガーを使用
   });
@@ -25,9 +28,7 @@ export async function createServer(): Promise<FastifyInstance> {
       cb: (err: Error | null, allow: boolean) => void,
     ) => {
       // 同一オリジンのみ許可
-      const allowedOrigins = [
-        process.env.ALLOWED_ORIGIN || 'http://localhost:3000',
-      ];
+      const allowedOrigins = [ALLOWED_ORIGIN];
       if (!origin || allowedOrigins.includes(origin)) {
         cb(null, true);
         return;
@@ -38,8 +39,7 @@ export async function createServer(): Promise<FastifyInstance> {
   });
 
   await server.register(cookie as never, {
-    secret:
-      process.env.COOKIE_SECRET || 'komoriuta-secret-key-change-in-production',
+    secret: COOKIE_SECRET,
   });
 
   // エラーハンドリング

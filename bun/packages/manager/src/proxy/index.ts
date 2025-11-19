@@ -4,11 +4,11 @@
  */
 
 import { serve } from 'bun';
+import { getEnv } from '../backend/utils/env';
 import { logger } from '../backend/utils/logger';
 import { handleRequest } from './router';
 
-const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '0.0.0.0';
+const { PORT, HOST } = getEnv();
 
 export async function startProxy() {
   const server = serve({

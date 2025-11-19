@@ -3,6 +3,7 @@
  */
 
 import { hashPassword, verifyPassword } from '../utils/crypto';
+import { getEnv } from '../utils/env';
 
 /**
  * 初期ユーザーのパスワードをハッシュ化
@@ -16,8 +17,7 @@ export function createPasswordHash(password: string): string {
  * ユーザー認証
  */
 export function authenticateUser(userId: string, password: string): boolean {
-  const expectedUserId = process.env.USER_ID || 'admin';
-  const passwordHash = process.env.PASSWORD_HASH || '';
+  const { USER_ID: expectedUserId, PASSWORD_HASH: passwordHash } = getEnv();
 
   if (userId !== expectedUserId) return false;
   if (!passwordHash) return false;

@@ -4,10 +4,10 @@
 
 import { createServer } from './server';
 import { startHeartbeatMonitoring } from './services/heartbeat';
+import { getEnv } from './utils/env';
 import { logger } from './utils/logger';
 
-const BACKEND_PORT = process.env.BACKEND_PORT || 3001;
-const BACKEND_HOST = process.env.BACKEND_HOST || '127.0.0.1';
+const { BACKEND_PORT, BACKEND_HOST } = getEnv();
 
 export async function startBackend() {
   const server = await createServer();
@@ -16,7 +16,7 @@ export async function startBackend() {
   startHeartbeatMonitoring();
 
   await server.listen({
-    port: Number(BACKEND_PORT),
+    port: BACKEND_PORT,
     host: BACKEND_HOST,
   });
 

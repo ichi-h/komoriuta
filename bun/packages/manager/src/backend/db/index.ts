@@ -5,12 +5,14 @@
 import { Database } from 'bun:sqlite';
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { getEnv } from '../utils/env';
 import { logger } from '../utils/logger';
 
 let db: Database | null = null;
 
 export async function initDatabase() {
-  const dbPath = process.env.DB_PATH || './data/komoriuta.db';
+  const { DB_PATH } = getEnv();
+  const dbPath = DB_PATH;
 
   try {
     // ディレクトリが存在しない場合は作成

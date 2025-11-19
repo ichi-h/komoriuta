@@ -4,6 +4,7 @@
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { getEnv } from './env';
 
 interface BaseLog {
   level: 'INFO' | 'WARN' | 'ERROR';
@@ -60,9 +61,7 @@ type LogData =
   | Omit<StartupLog, 'level' | 'timestamp'>
   | Omit<GenericLog, 'level' | 'timestamp'>;
 
-const LOG_FILE_PATH =
-  process.env.LOG_FILE_PATH || './logs/komo-manager.log.jsonl';
-const DISABLE_FILE_LOG = process.env.DISABLE_FILE_LOG === 'true';
+const { LOG_FILE_PATH, DISABLE_FILE_LOG } = getEnv();
 
 class Logger {
   private ensureLogDirectory() {
