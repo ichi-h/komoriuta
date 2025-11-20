@@ -11,8 +11,6 @@ import { hashPassword, verifyPassword } from '../utils/crypto';
 import { getEnv } from '../utils/env';
 import { logger } from '../utils/logger';
 
-const { USER_ID, PASSWORD_HASH, SESSION_MAX_AGE } = getEnv();
-
 /**
  * 初期ユーザーのパスワードをハッシュ化
  * 環境変数設定用のヘルパー関数
@@ -53,6 +51,7 @@ export function login(
   limiter: IRateLimiter = rateLimiter,
 ): LoginResult {
   const startTime = Date.now();
+  const { USER_ID, PASSWORD_HASH, SESSION_MAX_AGE } = getEnv();
 
   // 認証
   const isValid = userId === USER_ID && verifyPassword(password, PASSWORD_HASH);
@@ -149,6 +148,8 @@ export function logout(
  * セッションCookie設定のオプション
  */
 export function getSessionCookieOptions() {
+  const { SESSION_MAX_AGE } = getEnv();
+  
   return {
     path: '/',
     maxAge: SESSION_MAX_AGE,
