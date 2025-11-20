@@ -2,8 +2,10 @@
  * サーバー管理サービス
  */
 
-import { getDatabase } from '../db';
+import { AccessTokensRepository } from '../db/repositories/access-tokens';
+import { ServersRepository } from '../db/repositories/servers';
 import type { PowerStatus, Server } from '../db/schema';
+import { withTransactionSync } from '../db/transaction';
 import { generateAccessToken, hashPassword } from '../utils/crypto';
 import { getEnv } from '../utils/env';
 
@@ -11,20 +13,16 @@ import { getEnv } from '../utils/env';
  * サーバー一覧取得
  */
 export function listServers(): Server[] {
-  const db = getDatabase();
-  return db
-    .query('SELECT * FROM servers ORDER BY created_at DESC')
-    .all() as Server[];
+  const repo = new ServersRepository();
+  return repo.findAll();
 }
 
 /**
  * サーバー詳細取得
  */
 export function getServer(id: number): Server | null {
-  const db = getDatabase();
-  return db
-    .query('SELECT * FROM servers WHERE id = ?')
-    .get(id) as Server | null;
+  const repo = new ServersRepository();
+  return repo.findById(id);
 }
 
 /**
@@ -35,32 +33,38 @@ export function createServer(data: {
   macAddress: string;
   heartbeatInterval?: number;
 }): { server: Server; accessToken: string } {
-  const db = getDatabase();
   const uuid = crypto.randomUUID();
   const accessToken = generateAccessToken();
   const tokenHash = hashPassword(accessToken);
 
-  // サーバー作成
-  const result = db.run(
-    `INSERT INTO servers (uuid, name, mac_address, heartbeat_interval)
-     VALUES (?, ?, ?, ?)`,
-    [uuid, data.name, data.macAddress, data.heartbeatInterval || 60],
-  );
+  // トランザクション内でサーバーとトークンを作成
+  const serverId = withTransactionSync((db) => {
+    const serversRepo = new ServersRepository(db);
+    const tokensRepo = new AccessTokensRepository(db);
 
-  const serverId = result.lastInsertRowid as number;
+    // サーバー作成
+    const id = serversRepo.create({
+      uuid,
+      name: data.name,
+      macAddress: data.macAddress,
+      heartbeatInterval: data.heartbeatInterval ?? 60,
+    });
 
-  // アクセストークン作成
-  const { TOKEN_EXPIRES_SECONDS } = getEnv();
-  const expiresAt =
-    TOKEN_EXPIRES_SECONDS === 0
-      ? null
-      : new Date(Date.now() + TOKEN_EXPIRES_SECONDS * 1000).toISOString();
+    // アクセストークン作成
+    const { TOKEN_EXPIRES_SECONDS } = getEnv();
+    const expiresAt =
+      TOKEN_EXPIRES_SECONDS === 0
+        ? null
+        : new Date(Date.now() + TOKEN_EXPIRES_SECONDS * 1000).toISOString();
 
-  db.run(
-    `INSERT INTO access_tokens (server_id, token_hash, expires_at)
-     VALUES (?, ?, ?)`,
-    [serverId, tokenHash, expiresAt],
-  );
+    tokensRepo.create({
+      serverId: id,
+      tokenHash,
+      expiresAt,
+    });
+
+    return id;
+  });
 
   const server = getServer(serverId);
   if (!server) {
@@ -81,40 +85,17 @@ export function updateServer(
     heartbeatInterval: number;
   }>,
 ): Server | null {
-  const db = getDatabase();
-  const updates: string[] = [];
-  const values: (string | number)[] = [];
-
-  if (data.name !== undefined) {
-    updates.push('name = ?');
-    values.push(data.name);
-  }
-  if (data.macAddress !== undefined) {
-    updates.push('mac_address = ?');
-    values.push(data.macAddress);
-  }
-  if (data.heartbeatInterval !== undefined) {
-    updates.push('heartbeat_interval = ?');
-    values.push(data.heartbeatInterval);
-  }
-
-  if (updates.length === 0) return getServer(id);
-
-  updates.push('updated_at = CURRENT_TIMESTAMP');
-  values.push(id);
-
-  db.run(`UPDATE servers SET ${updates.join(', ')} WHERE id = ?`, values);
-
-  return getServer(id);
+  const repo = new ServersRepository();
+  repo.update(id, data);
+  return repo.findById(id);
 }
 
 /**
  * サーバー削除
  */
 export function deleteServer(id: number): boolean {
-  const db = getDatabase();
-  const result = db.run('DELETE FROM servers WHERE id = ?', [id]);
-  return result.changes > 0;
+  const repo = new ServersRepository();
+  return repo.delete(id);
 }
 
 /**
@@ -124,16 +105,7 @@ export function updatePowerStatus(
   id: number,
   powerStatus: PowerStatus,
 ): Server | null {
-  const db = getDatabase();
-
-  db.run(
-    `UPDATE servers 
-     SET power_status = ?, 
-         last_power_changed_at = CURRENT_TIMESTAMP,
-         updated_at = CURRENT_TIMESTAMP
-     WHERE id = ?`,
-    [powerStatus, id],
-  );
-
-  return getServer(id);
+  const repo = new ServersRepository();
+  repo.updatePowerStatus(id, powerStatus);
+  return repo.findById(id);
 }

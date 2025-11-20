@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "bun --hot src/index.ts",
     "build": "bun run tsc && bun build --compile --target bun --outfile bin/komo-api src/index.ts",
-    "start": "./bin/komo-api"
+    "start": "./bin/komo-api",
+    "seed": "bun run src/scripts/seed/index.ts"
   },
   "dependencies": {
     "@connectrpc/connect": "^2.1.1",

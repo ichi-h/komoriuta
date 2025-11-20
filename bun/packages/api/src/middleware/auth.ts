@@ -3,6 +3,9 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { AccessTokensRepository } from '../db/repositories/access-tokens';
+import { ServersRepository } from '../db/repositories/servers';
+import { verifyPassword } from '../utils/crypto';
 import { getEnv } from '../utils/env';
 
 // セッション管理(インメモリ)
@@ -102,4 +105,58 @@ export function extractBearerToken(
 ): string | null {
   if (!authorization?.startsWith('Bearer ')) return null;
   return authorization.substring(7);
+}
+
+/**
+ * アクセストークンを検証してサーバーIDを返す
+ */
+export async function verifyAccessToken(token: string): Promise<number | null> {
+  const tokensRepo = new AccessTokensRepository();
+  const serversRepo = new ServersRepository();
+
+  // 全サーバーを取得
+  const servers = serversRepo.findAll();
+
+  for (const server of servers) {
+    const accessToken = tokensRepo.findByServerId(server.id);
+    if (!accessToken) continue;
+
+    // 有効期限チェック
+    if (accessToken.expires_at) {
+      const expiresAt = new Date(accessToken.expires_at).getTime();
+      if (Date.now() > expiresAt) continue;
+    }
+
+    // トークンハッシュ検証
+    if (verifyPassword(token, accessToken.token_hash)) {
+      return server.id;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Agent認証ミドルウェア（Bearer Token）
+ */
+export async function agentAuthMiddleware(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
+  const token = extractBearerToken(request.headers.authorization);
+
+  if (!token) {
+    return reply
+      .code(401)
+      .send({ error: 'Missing or invalid authorization header' });
+  }
+
+  const serverId = await verifyAccessToken(token);
+
+  if (!serverId) {
+    return reply.code(401).send({ error: 'Invalid or expired access token' });
+  }
+
+  // リクエストにサーバーIDを追加
+  request.serverId = serverId;
 }

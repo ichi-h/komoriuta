@@ -10,6 +10,7 @@ declare module 'fastify' {
     cookies: {
       [key: string]: string | undefined;
     };
+    serverId?: number;
   }
 
   interface FastifyReply {

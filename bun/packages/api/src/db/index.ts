@@ -7,6 +7,7 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { getEnv } from '../utils/env';
 import { logger } from '../utils/logger';
+import { runMigrations } from './migrations';
 
 let db: Database | null = null;
 
@@ -22,8 +23,8 @@ export async function initDatabase() {
     }
     db = new Database(dbPath, { create: true });
 
-    // テーブル作成
-    await createTables();
+    // マイグレーションを実行
+    await runMigrations(db);
 
     logger.info({
       type: 'database',
@@ -37,41 +38,6 @@ export async function initDatabase() {
     });
     throw error;
   }
-}
-
-async function createTables() {
-  if (!db) throw new Error('Database not initialized');
-
-  // serversテーブル
-  db.run(`
-    CREATE TABLE IF NOT EXISTS servers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      uuid TEXT NOT NULL UNIQUE,
-      name TEXT NOT NULL,
-      mac_address TEXT NOT NULL,
-      power_status INTEGER NOT NULL DEFAULT 0,
-      heartbeat_status INTEGER NOT NULL DEFAULT 0,
-      previous_heartbeat_status INTEGER NOT NULL DEFAULT 0,
-      heartbeat_interval INTEGER NOT NULL DEFAULT 60,
-      last_heartbeat_at DATETIME,
-      last_power_changed_at DATETIME,
-      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  // access_tokensテーブル
-  db.run(`
-    CREATE TABLE IF NOT EXISTS access_tokens (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      server_id INTEGER NOT NULL,
-      token_hash TEXT NOT NULL,
-      expires_at DATETIME,
-      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
-    )
-  `);
 }
 
 export function getDatabase(): Database {

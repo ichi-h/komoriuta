@@ -2,7 +2,7 @@
  * ハートビート監視サービス
  */
 
-import { getDatabase } from '../db';
+import { ServersRepository } from '../db/repositories/servers';
 import type { Server } from '../db/schema';
 import { CurrentStatus, HeartbeatStatus, PowerStatus } from '../db/schema';
 import { logger } from '../utils/logger';
@@ -18,18 +18,8 @@ export function updateHeartbeatStatus(
   serverId: number,
   heartbeatStatus: HeartbeatStatus,
 ): void {
-  const db = getDatabase();
-
-  // 前回のハートビートステータスを保存
-  db.run(
-    `UPDATE servers 
-     SET previous_heartbeat_status = heartbeat_status,
-         heartbeat_status = ?,
-         last_heartbeat_at = CURRENT_TIMESTAMP,
-         updated_at = CURRENT_TIMESTAMP
-     WHERE id = ?`,
-    [heartbeatStatus, serverId],
-  );
+  const repo = new ServersRepository();
+  repo.updateHeartbeatStatus(serverId, heartbeatStatus);
 }
 
 /**
@@ -183,8 +173,8 @@ export function startHeartbeatMonitoring() {
  * 全サーバーのハートビートをチェック
  */
 function monitorHeartbeats() {
-  const db = getDatabase();
-  const servers = db.query('SELECT * FROM servers').all() as Server[];
+  const repo = new ServersRepository();
+  const servers = repo.findAll();
 
   for (const server of servers) {
     const currentStatus = calculateCurrentStatus(server);
@@ -204,24 +194,12 @@ function monitorHeartbeats() {
 
     // SyncedONの場合、電源ステータスをONに自動変更
     if (currentStatus === CurrentStatus.SyncedON) {
-      db.run(
-        `UPDATE servers 
-         SET power_status = ?,
-             last_power_changed_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [PowerStatus.ON, server.id],
-      );
+      repo.updatePowerStatus(server.id, PowerStatus.ON);
     }
 
     // SyncedOFFの場合、電源ステータスをOFFに自動変更
     if (currentStatus === CurrentStatus.SyncedOFF) {
-      db.run(
-        `UPDATE servers 
-         SET power_status = ?,
-             last_power_changed_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [PowerStatus.OFF, server.id],
-      );
+      repo.updatePowerStatus(server.id, PowerStatus.OFF);
     }
   }
 }
