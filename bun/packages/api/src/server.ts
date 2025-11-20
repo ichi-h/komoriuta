@@ -7,7 +7,6 @@ import cors from '@fastify/cors';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { initDatabase } from './db';
 import { errorHandler } from './middleware/error';
-import { registerAuthRoutes } from './routes/auth';
 import { registerConnectRoutes } from './routes/connect';
 import { getEnv } from './utils/env';
 
@@ -46,7 +45,6 @@ export async function createServer(): Promise<FastifyInstance> {
   server.setErrorHandler(errorHandler);
 
   // ルート登録
-  await registerAuthRoutes(server);
   await registerConnectRoutes(server);
 
   return server;
