@@ -27,11 +27,8 @@ proto/
 ```bash
 cd proto
 
-# direnvを使用している場合（自動で環境が読み込まれます）
+# .envrcが許可されていなかったら許可する
 direnv allow
-
-# または手動でNix開発環境に入る
-nix develop
 ```
 
 ### 2. 依存関係の更新
@@ -44,21 +41,17 @@ buf dep update
 
 ```bash
 # すべてのプロトファイルからコードを生成
-buf generate --path ./komoriuta
-
-# 生成されたコード:
-# - gen/go/komoriuta/v1/     (Go用)
-# - gen/ts/komoriuta/v1/     (TypeScript用)
+buf generate
 ```
 
 ### 4. Linting
 
 ```bash
 # Protobufファイルのチェック
-buf lint --path ./komoriuta
+buf lint
 
 # フォーマット
-buf format -w --path ./komoriuta
+buf format -w
 ```
 
 ## 定義されたサービス
@@ -103,11 +96,3 @@ buf format -w --path ./komoriuta
 - サーバー名: 1 文字以上
 - MAC アドレス: `^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$`
 - ハートビート間隔: 5〜60 秒
-
-## 次のステップ
-
-1. `buf generate` でコードを生成
-2. 生成されたコードをマネージャー（Bun）とエージェント（Go）のプロジェクトに統合
-3. Connect サーバー/クライアントを実装
-
-詳細は `SCHEMA.md` を参照してください。

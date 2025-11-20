@@ -1,13 +1,14 @@
 # Suggested Commands
 
-## 重要: Nixコマンドの実行方法
-このプロジェクトではNixを使用しているため、コマンドは `nix develop --command` を用いて実行する必要があります。
+## 重要: Nix コマンドの実行方法
 
-例: `nix develop --command <コマンド>`
+このプロジェクトでは Nix と direnv を使用しています。  
+nix develop の開発環境へは、direnv allow が行われていれば、各 flake.nix が配置されたディレクトリへ移動するだけで自動的に入ることができます。
 
 ## 開発環境のセットアップ
 
 ### ルートディレクトリ
+
 ```bash
 # Nix開発環境に入る（Serena MCPサーバーを利用可能に）
 nix develop
@@ -17,63 +18,62 @@ direnv allow
 ```
 
 ### Manager (Bun/TypeScript) - /bun
+
 ```bash
 cd bun
 
-# Nix開発環境に入る
-nix develop
-
-# または direnv使用
+# .envrcが許可されていなかったら許可する
 direnv allow
 
 # パッケージのインストール（Bun使用）
-nix develop --command bun install
+bun install
 
 # 開発サーバー起動（想定）
-nix develop --command bun run dev
+bun run dev
 
 # ビルド（想定）
-nix develop --command bun run build
+bun run build
 
 # リンティング & フォーマット（Biome使用）
-nix develop --command biome check .
-nix develop --command biome format .
+biome check .
+biome format .
 ```
 
 ### Agent (Go) - /go
+
 ```bash
 cd go
 
-# Nix開発環境に入る
-nix develop
-
-# または direnv使用
+# .envrcが許可されていなかったら許可する
 direnv allow
 
 # ビルド
-nix develop --command go build
+go build
 
 # テスト
-nix develop --command go test ./...
+go test ./...
 
 # リンティング
-nix develop --command go vet ./...
+go vet ./...
 
 # フォーマット
-nix develop --command go fmt ./...
+go fmt ./...
 ```
 
 ## Protocol Buffers
-```bash
-# スキーマからコード生成（ツールのセットアップが必要）
-# Bun/TypeScript用
-nix develop --command buf generate --template buf.gen.yaml
 
-# Go用
-nix develop --command buf generate --template buf.gen.yaml
+```bash
+cd proto
+
+# .envrcが許可されていなかったら許可する
+direnv allow
+
+# スキーマからコード生成
+buf generate
 ```
 
-## Git操作
+## Git 操作
+
 ```bash
 # 通常のgitコマンドが使用可能
 git status
@@ -83,6 +83,7 @@ git push
 ```
 
 ## ユーティリティコマンド（Linux）
+
 ```bash
 # ファイル・ディレクトリ操作
 ls -la
